@@ -1,0 +1,6 @@
+# Robots.txt file for TruthNowAI.com
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://truthnowai.com/sitemap.xml
