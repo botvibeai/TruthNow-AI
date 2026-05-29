@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity validator: User
+    function isValidUser(user) {
+      return user.userId == request.auth.uid
+        && user.email is string && user.email.size() <= 200
+        && user.totalScansCount is int && user.totalScansCount >= 0
+        && user.createdAt is string
+        && user.updatedAt is string;
+    }
+
+    // Entity validator: ApiKey
+    function isValidApiKey(apiKey) {
+      return apiKey.id is string && apiKey.id.size() <= 128
+        && apiKey.name is string && apiKey.name.size() <= 120
+        && apiKey.key is string && apiKey.key.size() <= 200
+        && apiKey.createdAt is string
+        && (apiKey.status == 'active' || apiKey.status == 'revoked')
+        && apiKey.callsCount is int && apiKey.callsCount >= 0;
+    }
+
+    // Entity validator: Review
+    function isValidReview(review) {
+      return review.id is string && review.id.size() <= 128
+        && review.author is string && review.author.size() <= 120
+        && review.role is string && review.role.size() <= 150
+        && review.company is string && review.company.size() <= 150
+        && review.rating is int && review.rating >= 1 && review.rating <= 5
+        && review.text is string && review.text.size() <= 2000
+        && review.verifiedQuery is string && review.verifiedQuery.size() <= 250
+        && review.createdAt is string;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.totalScansCount == 0;
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalScansCount', 'updatedAt']) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])
+      );
+      allow delete: if isOwner(userId);
+
+      match /apiKeys/{keyId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(keyId) && isValidApiKey(request.resource.data) && request.resource.data.callsCount == 0;
+        allow update: if isOwner(userId) && isValidId(keyId) && isValidApiKey(request.resource.data) && (
+          // Action: Toggle status (active/revoked) or record simulated call count
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['callsCount'])
+        );
+        allow delete: if isOwner(userId) && isValidId(keyId);
+      }
+    }
+
+    match /reviews/{reviewId} {
+      allow read, list: if true; // Public list
+      allow create: if isSignedIn() && isValidId(reviewId) && isValidReview(request.resource.data) 
+        && (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
+      allow update, delete: if false; // Reviews are immutable!
+    }
+  }
+}

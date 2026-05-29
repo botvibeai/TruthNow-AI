@@ -42,6 +42,9 @@ export interface ScanResponse {
   faces: FaceData[];
   geoCompliance: GeoCompliance;
   processedAt: string;
+  isAiGenerated?: boolean;
+  aiConfidence?: number;
+  aiReason?: string;
   seoMetrics: {
     keywordsActive: string[];
     score: number;
@@ -64,4 +67,13 @@ export interface FaqItem {
   question: string;
   answer: string;
   keywordRelation?: string;
+}
+
+export interface DevApiKey {
+  id: string;
+  name: string;
+  key: string;
+  createdAt: string;
+  status: "active" | "revoked";
+  callsCount: number;
 }

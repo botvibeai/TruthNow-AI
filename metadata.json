@@ -1,6 +1,6 @@
 {
   "name": "TruthNowAI",
-  "description": "Face, gender, presentation, and age recognition tool using advanced cloud cognitive visual AI analysis models.",
+  "description": "Face recognition, age and gender detector, and Real or AI generated image verification platform using advanced visual analysis.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

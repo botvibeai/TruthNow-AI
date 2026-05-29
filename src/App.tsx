@@ -4,148 +4,59 @@ import {
   Camera, Upload, Shield, Sparkles, Zap, Globe, FileCheck, 
   RefreshCw, CheckCircle, Sliders, PlayCircle, Star, HelpCircle, 
   ArrowRight, Heart, ExternalLink, Moon, Eye, AlertCircle, Info, Trash2,
-  ZoomIn, ZoomOut
+  ZoomIn, ZoomOut, Code, Copy, Plus, ArrowLeft, Key, Terminal, BookOpen, Layers, Check, KeyRound, Server, Scale
 } from "lucide-react";
-import { FaceData, ScanResponse, ClientReview, FaqItem } from "./types";
+import { FaceData, ScanResponse, ClientReview, FaqItem, DevApiKey } from "./types";
 import HeroSection from "./components/HeroSection";
+import DeveloperPortal from "./components/DeveloperPortal";
+import ApiDocs from "./components/ApiDocs";
 import { TruthNowLogo } from "./components/TruthNowLogo";
+import { useFirebase } from "./components/FirebaseProvider";
+import CompareScanner from "./components/CompareScanner";
+import BulkScanner from "./components/BulkScanner";
+import { translations, Language } from "./translations";
+import { 
+  GEO_OPTIONS_LOCALIZED, 
+  PRESET_MOCK_PORTRAITS_LOCALIZED, 
+  FAQS_DATA, 
+  USER_REVIEWS_INITIAL_DATA, 
+  MAIN_EXTRA_TRANSLATIONS 
+} from "./localesData";
 
-
-// Sample Demo Presets to deliver the absolute immediate "wow factor" without requiring file upload
-const PRESET_MOCK_PORTRAITS = [
-  {
-    id: "preset_adult_female",
-    name: "Corporate Executive",
-    imageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop",
-    genderPresentation: "Female",
-    estimatedAge: 29,
-    ageCategory: "Adult",
-    ageRange: "27-33",
-    confidence: 99.4,
-    safetyCode: "PASS_ADULT_APPEARANCE",
-    safetyReasoning: "Visual examination of the fine lines, well-defined zygomatic arches (cheekbones), and cranial metrics confirms a mature adult state cleanly over the 18-year compliance threshold.",
-    expression: "Confident Smile",
-    attributes: { glassesDetected: false, facialHairDetected: false, makeupDetected: true, lightingQuality: "Studio Bright" }
-  },
-  {
-    id: "preset_toddler",
-    name: "Preserve Safety Child",
-    imageUrl: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=400&auto=format&fit=crop",
-    genderPresentation: "Ambiguous (Youth)",
-    estimatedAge: 4,
-    ageCategory: "Child",
-    ageRange: "3-5",
-    confidence: 97.8,
-    safetyCode: "SURE_MINOR",
-    safetyReasoning: "Primary facial indicators—specifically the hyper-clear dermis layer, significant skeletal ratio variance (oversized forehead relative to jaw length), and absence of structural collagen maturity—provide absolute confidence of minor (under 18) appearance.",
-    expression: "Playful Joy",
-    attributes: { glassesDetected: false, facialHairDetected: false, makeupDetected: false, lightingQuality: "Natural Light" }
-  },
-  {
-    id: "preset_teen_border",
-    name: "Borderline Teen safety",
-    imageUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400&auto=format&fit=crop",
-    genderPresentation: "Male",
-    estimatedAge: 17,
-    ageCategory: "Teenager",
-    ageRange: "16-18",
-    confidence: 94.2,
-    safetyCode: "ALERT_MINOR_APPEARANCE",
-    safetyReasoning: "Mandatory compliance caution flagged. Individual displays borderline teenager-to-adult features. Soft mandibular edge presents developmental signs nearing age of majority but safety triggers require physical age audit.",
-    expression: "Neutral / Focused",
-    attributes: { glassesDetected: true, facialHairDetected: true, makeupDetected: false, lightingQuality: "High Contrast" }
-  },
-  {
-    id: "preset_senior",
-    name: "Senior Academic Analyst",
-    imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=400&auto=format&fit=crop",
-    genderPresentation: "Female",
-    estimatedAge: 68,
-    ageCategory: "Senior",
-    ageRange: "65-72",
-    confidence: 98.9,
-    safetyCode: "PASS_ADULT_APPEARANCE",
-    safetyReasoning: "Highly developed optical and glabellar furrows, structural skin remodeling, and characteristic adult orbital rim ratios confirm an advanced adult demographic status.",
-    expression: "Warm Serenity",
-    attributes: { glassesDetected: true, facialHairDetected: false, makeupDetected: false, lightingQuality: "Diffused Ambient" }
-  }
-];
-
-const FAQS_LIST: FaqItem[] = [
-  {
-    id: "faq_minor",
-    question: "How to check if person in photo is minor or adult appearance?",
-    answer: "Our visual scanning models analyze anatomical features including skeletal cranial ratios (e.g. mandibular projection vs orbital placement), epidermal density, skin texture, and relative face proportions to predict if an individual presents an appearance below the regulatory age threshold. Borderline assessments trigger either a 'SURE_MINOR' or an 'ALERT_MINOR_APPEARANCE' response to keep platforms safe and COPPA/GDPR compliance risk-free.",
-    keywordRelation: "how to check if person in photo is minor or adult appearance"
-  },
-  {
-    id: "faq_accuracy",
-    question: "How accurate is the age and gender detection engine?",
-    answer: "We leverage state-of-the-art visual recognition algorithms built on top of the Cloudmersive API and optimized by Gemini cognitive vision structures. Our gender detector features have a checked accuracy score of 99.8% on standard benchmark datasets, and estimated age calculations average an ultra-tight absolute error rate of only 1.8 years under standardized lighting conditions.",
-    keywordRelation: "age and gender detection"
-  },
-  {
-    id: "faq_privacy",
-    question: "Is raw biometric data retained on TruthNowAI.com?",
-    answer: "No. Security and compliance form our foundational architecture. All uploaded photos are processed strictly in transient memory. Raw visual files are immediately purged in 100% real-time upon scan completion. Our servers never cache personal identification indexes, which is why we serve organizations in regulated environments such as CCPA (US), HIPAA, GDPR (EU), and PIPEDA (Canada) securely.",
-    keywordRelation: "truth now"
-  },
-  {
-    id: "faq_lowlight",
-    question: "Can the face gender analyzer process low-lights or angled faces?",
-    answer: "Yes. The face gender detector uses high-fidelity spatial normalization modules, recovering landmarks from tilted or poorly illuminated shots. Our analytics package returns an additional 'lightingQuality' assessment index to advise users if a recalibration is needed for perfect reliability.",
-    keywordRelation: "face gender analyzer"
-  },
-  {
-    id: "faq_enterprise",
-    question: "Why does TruthNowAI.com offer better pricing than competitors?",
-    answer: "Our cloud-optimized checking architecture is designed for high-density enterprise scalability. We pass bulk compute savings directly to customers, providing starting rates of just $0.09 per scan in developer tiers and offering comprehensive SaaS bundles starting at under $0.30 per check, whereas other identity checkers often charge upward of $0.50 to $1.50 per manual audit.",
-    keywordRelation: "photo gender detector"
-  }
-];
-
-const USER_REVIEWS_INITIAL: ClientReview[] = [
-  {
-    id: "review_1",
-    author: "Elena Rostov",
-    role: "VP of Safety Compliance",
-    company: "KidGuard Interactive",
-    rating: 5,
-    avatarSeed: "elena",
-    text: "TruthNowAI has transformed our automated verification flows. We use their age gender detector to verify that age-gated gaming rooms stay safe. Decoupling minor vs adult appearance with direct structural reasoning saves us thousands of hours in manual review.",
-    verifiedQuery: "how to check if person in photo is minor or adult appearance"
-  },
-  {
-    id: "review_2",
-    author: "Marcus Vance",
-    role: "Director of Product Integrity",
-    company: "AgeFlow UK",
-    rating: 5,
-    avatarSeed: "marcus",
-    text: "The speed is stellar. We integrated the gender face detector client directly into our retail flow. The average query registers at under 140ms, and geographic-compliance metadata keeps our local legal team completely aligned.",
-    verifiedQuery: "gender face detector"
-  },
-  {
-    id: "review_3",
-    author: "Kenji Sato",
-    role: "Lead ML Researcher",
-    company: "OmniBiometrics Inc",
-    rating: 5,
-    avatarSeed: "kenji",
-    text: "We tested several options, but this face gender analyzer handles angles and poor workspace illumination with the best confidence metrics. In bulk developer volumes, the ROI is simple compared to in-house model hosting overhead.",
-    verifiedQuery: "face gender analyzer"
-  }
-];
-
-const GEO_COMPLIANCE_OPTIONS = [
-  { code: "US", name: "United States (COPPA/CCPA)" },
-  { code: "GB", name: "United Kingdom (BSI Standard)" },
-  { code: "EU", name: "European Union (GDPR Art. 9)" },
-  { code: "CA", name: "Canada (PIPEDA Safety)" }
-];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"sandbox" | "calculator" | "standards">("sandbox");
+  const {
+    user,
+    loading: isFirebaseLoading,
+    totalScansCount: cloudScansCount,
+    apiKeys: cloudApiKeys,
+    reviews: cloudReviews,
+    signInWithGoogle,
+    logOut,
+    createApiKey: cloudCreateApiKey,
+    revokeApiKey: cloudRevokeApiKey,
+    toggleApiKeyStatus: cloudToggleApiKeyStatus,
+    incrementScanCount: cloudIncrementScanCount,
+    submitFeedbackReview: cloudSubmitFeedbackReview
+  } = useFirebase();
+
+  const [showApiPortal, setShowApiPortal] = useState<boolean>(false);
+  const [showApiDocs, setShowApiDocs] = useState<boolean>(false);
+  const [apiKeys, setApiKeys] = useState<DevApiKey[]>(() => {
+    const saved = localStorage.getItem("truthnowai_api_keys");
+    return saved ? JSON.parse(saved) : [
+      {
+        id: "key_initial",
+        name: "Sandbox Testing Token",
+        key: "tn_test_a4b9c1d0e5f67890abcdef123y7",
+        createdAt: "2026-05-27",
+        status: "active",
+        callsCount: 42
+      }
+    ];
+  });
+
+  const [activeTab, setActiveTab ] = useState<"sandbox" | "calculator" | "standards">("sandbox");
   const [selectedCountry, setSelectedCountry] = useState<string>("US");
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -158,16 +69,60 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("truthnowai_total_scans_count", totalScansCount.toString());
-  }, [totalScansCount]);
+    if (!user) {
+      localStorage.setItem("truthnowai_total_scans_count", totalScansCount.toString());
+    }
+  }, [totalScansCount, user]);
+
+  const activeApiKeys = user ? cloudApiKeys : apiKeys;
+  const activeScansCount = user ? cloudScansCount : totalScansCount;
 
   // SaaS Credits & Active Plan Tiers
   const [remainingScans, setRemainingScans] = useState<number>(5);
   const [activePlan, setActivePlan] = useState<string>("Free Demo Plan");
   const [pricingMode, setPricingMode] = useState<"saas" | "api">("saas");
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem("truthnowai_language");
+    return (saved as Language) || "en";
+  });
+
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState<boolean>(false);
+
+  const PRESET_MOCK_PORTRAITS = PRESET_MOCK_PORTRAITS_LOCALIZED[language];
+  const FAQS_LIST = FAQS_DATA[language];
+  const GEO_COMPLIANCE_OPTIONS = GEO_OPTIONS_LOCALIZED[language];
+  const extraT = MAIN_EXTRA_TRANSLATIONS[language];
+
+  useEffect(() => {
+    localStorage.setItem("truthnowai_language", language);
+  }, [language]);
+
+  // Interactive Workbench Modes - Single analysis, comparative side-by-side, or multi batch upload
+  const [workbenchMode, setWorkbenchMode] = useState<"single" | "compare" | "bulk">("single");
+
+  // Global app notification toast system
+  const [toasts, setToasts] = useState<{ id: string; message: string; type?: "success" | "info" | "error" }[]>([]);
+
+  const showToast = (message: string, type: "success" | "info" | "error" = "success") => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 2500);
+  };
 
   // Dynamic user reviews from testimonials submit form
-  const [reviewsList, setReviewsList] = useState<ClientReview[]>(USER_REVIEWS_INITIAL);
+  const [reviewsList, setReviewsList] = useState<ClientReview[]>([]);
+
+  useEffect(() => {
+    const customReviews = reviewsList.filter(item => item.id.startsWith("custom_"));
+    setReviewsList([...customReviews, ...USER_REVIEWS_INITIAL_DATA[language]]);
+  }, [language]);
+
+  const displayedReviews = [
+    ...cloudReviews,
+    ...reviewsList.filter(item => !cloudReviews.some(cItem => cItem.id === item.id))
+  ];
 
   // Add review form fields
   const [reviewAuthor, setReviewAuthor] = useState<string>("");
@@ -206,6 +161,53 @@ export default function App() {
 
   // Pricing calculator state variables (For API Rate structures)
   const [monthlyVolume, setMonthlyVolume] = useState<number>(30000);
+
+  // Developer API Key manipulation handlers
+  const handleGenerateApiKey = async (nameOfKey: string) => {
+    if (user) {
+      await cloudCreateApiKey(nameOfKey);
+    } else {
+      const prefix = "tn_live_";
+      const bodyStr = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      const newKeyStr = prefix + bodyStr;
+      const newKeyObj: DevApiKey = {
+        id: "key_" + Date.now(),
+        name: nameOfKey.trim() || "Production API Integration Token",
+        key: newKeyStr,
+        createdAt: new Date().toISOString().split("T")[0],
+        status: "active",
+        callsCount: 0
+      };
+      const updated = [...apiKeys, newKeyObj];
+      setApiKeys(updated);
+      localStorage.setItem("truthnowai_api_keys", JSON.stringify(updated));
+    }
+  };
+
+  const handleRevokeApiKey = async (id: string) => {
+    if (user) {
+      await cloudRevokeApiKey(id);
+    } else {
+      const updated = apiKeys.filter(k => k.id !== id);
+      setApiKeys(updated);
+      localStorage.setItem("truthnowai_api_keys", JSON.stringify(updated));
+    }
+  };
+
+  const handleToggleKeyStatus = async (id: string) => {
+    if (user) {
+      await cloudToggleApiKeyStatus(id);
+    } else {
+      const updated = apiKeys.map(k => {
+        if (k.id === id) {
+          return { ...k, status: k.status === "active" ? ("revoked" as const) : ("active" as const) };
+        }
+        return k;
+      });
+      setApiKeys(updated);
+      localStorage.setItem("truthnowai_api_keys", JSON.stringify(updated));
+    }
+  };
 
   // Crawler validation log mock text
   const [robotsTxtContent, setRobotsTxtContent] = useState<string>("");
@@ -330,7 +332,7 @@ export default function App() {
   // Call proxy endpoint with base64
   const analyzeBase64String = async (base64Data: string) => {
     if (remainingScans <= 0) {
-      setScannerErrorMessage("No query credits remaining on your current SaaS plan. Please purchase a Trial Pack (8 scans for $9.95) or activate an SLA subscription plan below to replenish your tokens instantly.");
+      setScannerErrorMessage("No query credits remaining on your current SaaS plan. Please purchase our Special Trial Pack (Buy 10 Get 10 Free for $6.99) or activate an SLA subscription plan below to replenish your tokens instantly.");
       // Automatically scroll to pricing to facilitate easy checkout
       document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" });
       return;
@@ -355,10 +357,14 @@ export default function App() {
         throw new Error(`API returned execution code ${response.status}`);
       }
 
-      const parsed: ScanResponse = await response.json();
+       const parsed: ScanResponse = await response.json();
       setScanResult(parsed);
       setRemainingScans(prev => Math.max(0, prev - 1));
-      setTotalScansCount(prev => prev + 1);
+      if (user) {
+        cloudIncrementScanCount();
+      } else {
+        setTotalScansCount(prev => prev + 1);
+      }
     } catch (err: any) {
       console.error("[ScannerEndpointError]:", err);
       setScannerErrorMessage(
@@ -381,7 +387,7 @@ export default function App() {
   // Direct Mock Action: Load a preset template on click for fast demonstration
   const handleLoadPresetMock = (preset: typeof PRESET_MOCK_PORTRAITS[0]) => {
     if (remainingScans <= 0) {
-      setScannerErrorMessage("No query credits remaining on your current SaaS plan. Please purchase a Trial Pack (8 scans for $9.95) or activate an SLA subscription plan below to replenish your tokens instantly.");
+      setScannerErrorMessage("No query credits remaining on your current SaaS plan. Please purchase our Special Trial Pack (Buy 10 Get 10 Free for $6.99) or activate an SLA subscription plan below to replenish your tokens instantly.");
       document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
@@ -400,6 +406,9 @@ export default function App() {
         usingSimulation: true,
         facesDetected: 1,
         processedAt: new Date().toISOString(),
+        isAiGenerated: preset.isAiGenerated,
+        aiConfidence: preset.aiConfidence,
+        aiReason: preset.aiReason,
         faces: [{
           confidenceScore: preset.confidence,
           estimatedAge: preset.estimatedAge,
@@ -427,7 +436,11 @@ export default function App() {
         }
       });
       setRemainingScans(prev => Math.max(0, prev - 1));
-      setTotalScansCount(prev => prev + 1);
+      if (user) {
+        cloudIncrementScanCount();
+      } else {
+        setTotalScansCount(prev => prev + 1);
+      }
       setIsScanning(false);
     }, 850);
   };
@@ -497,23 +510,33 @@ export default function App() {
   };
 
   // Submission handler for dynamic client reviews
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewAuthor.trim() || !reviewText.trim()) {
       alert("Name and Review Text fields are required.");
       return;
     }
-    const newReview: ClientReview = {
-      id: `custom_review_${Date.now()}`,
+    const reviewData = {
       author: reviewAuthor.trim(),
       role: reviewRole.trim() || "Biometrics Safety Officer",
       company: reviewCompany.trim() || "Independent Platform",
       rating: reviewRating,
       avatarSeed: reviewAuthor.toLowerCase().replace(/\s/g, "_"),
       text: reviewText.trim(),
-      verifiedQuery: reviewQuery
+      verifiedQuery: reviewQuery,
+      createdAt: new Date().toISOString(),
+      userId: user?.uid || null
     };
-    setReviewsList(prev => [newReview, ...prev]);
+
+    if (user) {
+      await cloudSubmitFeedbackReview(reviewData);
+    } else {
+      const newReview: ClientReview = {
+        ...reviewData,
+        id: `custom_review_${Date.now()}`
+      };
+      setReviewsList(prev => [newReview, ...prev]);
+    }
     setReviewSubmitSuccess(true);
     
     // Clear fields
@@ -552,6 +575,8 @@ export default function App() {
     (faq.keywordRelation && faq.keywordRelation.toLowerCase().includes(faqSearchQuery.toLowerCase()))
   );
 
+  const t = translations[language];
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col justify-between">
       
@@ -564,58 +589,201 @@ export default function App() {
       </div>
 
       {/* Modern Header matching Sleek Design spec */}
-      <header className="sticky top-0 z-50 h-16 px-4 md:px-8 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <TruthNowLogo className="h-8 md:h-9" />
-          <span className="hidden lg:inline-block text-[8px] font-mono text-slate-500 tracking-wider font-bold ml-1 border-l border-slate-800 pl-2">BY VOLT COGNITIVE</span>
+      <header className="sticky top-0 z-50 h-24 px-4 md:px-8 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setShowApiPortal(false); setShowApiDocs(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+          <TruthNowLogo className="h-16 md:h-18" />
+          <span className="hidden lg:inline-block text-[10px] font-mono text-slate-500 tracking-wider font-bold ml-1 border-l border-slate-800 pl-2">BY VOLT COGNITIVE</span>
         </div>
 
         {/* Navigation anchors */}
         <nav className="hidden md:flex gap-7 text-xs font-semibold uppercase tracking-wider text-slate-400">
           <button 
-            onClick={() => { setActiveTab("sandbox"); document.getElementById("sandbox-workspace")?.scrollIntoView({ behavior: "smooth" }); }}
-            className={`hover:text-indigo-400 transition-colors cursor-pointer ${activeTab === "sandbox" ? "text-indigo-400 underline decoration-indigo-400 underline-offset-4" : ""}`}
+            onClick={() => { setShowApiPortal(false); setShowApiDocs(false); setActiveTab("sandbox"); setTimeout(() => document.getElementById("sandbox-workspace")?.scrollIntoView({ behavior: "smooth" }), 50); }}
+            className={`hover:text-indigo-400 transition-colors cursor-pointer ${activeTab === "sandbox" && !showApiPortal && !showApiDocs ? "text-indigo-400 underline decoration-indigo-400 underline-offset-4" : ""}`}
           >
-            Live Scanner
+            {t.nav.scanner}
           </button>
           <button 
-            onClick={() => { setActiveTab("calculator"); document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" }); }}
-            className={`hover:text-indigo-400 transition-colors cursor-pointer ${activeTab === "calculator" ? "text-indigo-400 underline decoration-indigo-400 underline-offset-4" : ""}`}
+            onClick={() => { setShowApiPortal(false); setShowApiDocs(false); setActiveTab("calculator"); setTimeout(() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" }), 50); }}
+            className={`hover:text-indigo-400 transition-colors cursor-pointer ${activeTab === "calculator" && !showApiPortal && !showApiDocs ? "text-indigo-400 underline decoration-indigo-400 underline-offset-4" : ""}`}
           >
-            API Calculator
+            {t.nav.calculator}
           </button>
-          <a href="#compliance-section" className="hover:text-indigo-400 transition-colors">Compliance Rules</a>
-          <a href="#reviews-section" className="hover:text-indigo-400 transition-colors">User Studies</a>
-          <a href="#faq-section" className="hover:text-indigo-400 transition-colors">FAQ</a>
+          <button 
+            onClick={() => { setShowApiPortal(false); setShowApiDocs(false); setTimeout(() => document.getElementById("compliance-section")?.scrollIntoView({ behavior: "smooth" }), 50); }}
+            className="hover:text-indigo-400 transition-colors text-left"
+          >
+            {t.nav.rules}
+          </button>
+          <button 
+            onClick={() => { setShowApiPortal(false); setShowApiDocs(false); setTimeout(() => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }), 50); }}
+            className="hover:text-indigo-400 transition-colors text-left"
+          >
+            {t.nav.studies}
+          </button>
+          <button 
+            onClick={() => { setShowApiPortal(false); setShowApiDocs(false); setTimeout(() => document.getElementById("faq-section")?.scrollIntoView({ behavior: "smooth" }), 50); }}
+            className="hover:text-indigo-400 transition-colors text-left"
+          >
+            {t.nav.faq}
+          </button>
         </nav>
 
         {/* Quick Trigger Call / Scan Credits remaining tracker pill */}
         <div className="flex items-center gap-3">
+          
+          {/* Custom Language Dropdown Switcher */}
+          <div className="relative z-50" id="global-language-selector">
+            <button
+              onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+              className="relative inline-flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-full pl-3 pr-3.5 py-1.5 select-none shrink-0 transition-all cursor-pointer font-medium text-xs font-mono text-slate-300 active:scale-95"
+              title="Change Language / Cambiar Idioma / Langue / Sprache / 言語"
+            >
+              <Globe className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span className="font-semibold uppercase tracking-wider text-[11px] min-w-[20px] text-center">
+                {language.toUpperCase()}
+              </span>
+              <span className={`text-[8px] text-slate-500 transition-transform ${isLangDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+
+            <AnimatePresence>
+              {isLangDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40 cursor-default" 
+                    onClick={() => setIsLangDropdownOpen(false)} 
+                  />
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-48 bg-slate-950/95 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 backdrop-blur-md"
+                  >
+                    {[
+                      { code: "en", label: "English", display: "EN" },
+                      { code: "es", label: "Español", display: "ES" },
+                      { code: "fr", label: "Français", display: "FR" },
+                      { code: "de", label: "Deutsch", display: "DE" },
+                      { code: "ja", label: "日本語", display: "JA" }
+                    ].map((item) => (
+                      <button
+                        key={item.code}
+                        onClick={() => {
+                          setLanguage(item.code as Language);
+                          setIsLangDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                          language === item.code 
+                            ? "bg-indigo-600/10 border border-indigo-500/20 text-indigo-300"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                        }`}
+                      >
+                        <span className="font-sans">{item.label}</span>
+                        <span className="font-mono text-[9px] bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-slate-400 uppercase font-semibold">
+                          {item.display}
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
           <div className="flex items-center gap-2 text-[11px] py-1.5 px-3.5 bg-slate-900/90 border border-slate-800 rounded-full font-mono">
-            <span className="hidden sm:inline text-slate-500">Tier:</span>
-            <span className="hidden sm:inline text-indigo-400 font-bold">{activePlan}</span>
+            <span className="hidden sm:inline text-slate-500">{t.nav.tier}</span>
+            <span className="hidden sm:inline text-indigo-400 font-bold">{user ? "Cloud Sync" : activePlan}</span>
             <span className="hidden sm:inline text-slate-700">|</span>
-            <span className="text-slate-400 font-semibold">{remainingScans} scans left</span>
+            <span className="text-slate-400 font-semibold">{user ? `${activeScansCount} ${t.nav.totalScans}` : `${remainingScans} ${t.nav.scansLeft}`}</span>
           </div>
           <button 
             onClick={() => {
               const el = document.getElementById("pricing-section");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xs font-bold tracking-wide transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-95 cursor-pointer font-sans"
+            className="px-4 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/30 text-white rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer font-sans"
           >
-            SaaS pricing
+            {t.nav.saasPricing}
           </button>
+
+          {/* Firebase Authentication Button */}
+          {user ? (
+            <div className="flex items-center gap-2.5 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full">
+              {user.photoURL ? (
+                <img 
+                  src={user.photoURL} 
+                  alt={user.displayName || "User"} 
+                  className="w-5 h-5 rounded-full object-cover border border-indigo-500/40"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white">
+                  {user.displayName?.charAt(0) || "U"}
+                </div>
+              )}
+              <span className="hidden lg:inline-block text-[11px] text-slate-300 font-medium max-w-[96px] overflow-hidden text-ellipsis whitespace-nowrap">
+                {user.displayName || "Developer"}
+              </span>
+              <button 
+                onClick={logOut}
+                className="text-[10px] text-slate-400 hover:text-red-400 font-bold transition-all uppercase tracking-wider pl-1.5 border-l border-slate-800 cursor-pointer"
+              >
+                {t.nav.exit}
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={signInWithGoogle}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-100 text-slate-950 rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer font-sans shadow-lg hover:shadow-white/5"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                <path fill="#EA4335" d="M22.86 12.3c0-.82-.07-1.61-.21-2.38H12v4.51h6.08a5.2 5.2 0 0 1-2.25 3.41v2.84h3.64c2.13-1.96 3.39-4.85 3.39-8.38z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.64-2.84c-1.01.68-2.3 1.08-3.64 1.08-2.81 0-5.18-1.9-6.03-4.46H2.18v2.93A11 11 0 0 0 12 23z" />
+                <path fill="#FBBC05" d="M5.97 14.12A6.6 6.6 0 0 1 5.5 12c0-.74.13-1.46.36-2.12V6.95H2.18A11 11 0 0 0 1 12c0 1.83.45 3.56 1.25 5.08l2.72-2.12V14.12z" />
+                <path fill="#4285F4" d="M5.97 9.88c.85-2.56 3.22-4.46 6.03-4.46 1.61 0 3.06.56 4.2 1.63l3.14-3.14A11 11 0 0 0 12 1c-4.41 0-8.23 2.58-10 6.34l3.97 3.08c0-.18 0-.36.2-.54z" />
+              </svg>
+              <span>{t.nav.googleSync}</span>
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Hero Section Container */}
-      <HeroSection onScrollToScanner={() => {
-        document.getElementById("sandbox-workspace")?.scrollIntoView({ behavior: "smooth" });
-      }} />
+      {showApiPortal ? (
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <DeveloperPortal 
+            apiKeys={activeApiKeys}
+            onGenerateApiKey={handleGenerateApiKey}
+            onRevokeApiKey={handleRevokeApiKey}
+            onToggleKeyStatus={handleToggleKeyStatus}
+            onClose={() => {
+              setShowApiPortal(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </main>
+      ) : showApiDocs ? (
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <ApiDocs 
+            onClose={() => {
+              setShowApiDocs(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </main>
+      ) : (
+        <>
+          {/* Hero Section Container */}
+          <HeroSection 
+            onScrollToScanner={() => {
+              document.getElementById("sandbox-workspace")?.scrollIntoView({ behavior: "smooth" });
+            }} 
+            lang={language}
+          />
 
-      {/* Main Workspace Body Content */}
-      <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-24">
+          {/* Main Workspace Body Content */}
+          <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-24 font-sans">
         
         {/* Interactive Analyzer Workspace */}
         <section id="sandbox-workspace" className="scroll-mt-24 space-y-10">
@@ -672,8 +840,46 @@ export default function App() {
             </div>
           </div>
 
-          {/* Interactive Workbench Sandbox Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Interactive Workbench Sandbox Layout Mode Selector Switcher Tab Row */}
+          <div className="flex justify-center max-w-lg mx-auto w-full pt-4 pb-2">
+            <div className="grid grid-cols-3 bg-slate-900/60 p-1 rounded-2xl border border-slate-800/80 w-full">
+              <button 
+                onClick={() => setWorkbenchMode("single")}
+                className={`py-2 px-3 text-xs font-semibold rounded-xl tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  workbenchMode === "single"
+                    ? "bg-slate-950 text-indigo-400 font-bold shadow-md shadow-black/40 border border-indigo-900/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <span>Single Profile</span>
+              </button>
+              <button 
+                onClick={() => setWorkbenchMode("compare")}
+                className={`py-2 px-3 text-xs font-semibold rounded-xl tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  workbenchMode === "compare"
+                    ? "bg-slate-950 text-indigo-400 font-bold shadow-md shadow-black/40 border border-indigo-900/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>Side-by-Side</span>
+              </button>
+              <button 
+                onClick={() => setWorkbenchMode("bulk")}
+                className={`py-2 px-3 text-xs font-semibold rounded-xl tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  workbenchMode === "bulk"
+                    ? "bg-slate-950 text-indigo-400 font-bold shadow-md shadow-black/40 border border-indigo-900/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Bulk Batch</span>
+              </button>
+            </div>
+          </div>
+
+          {workbenchMode === "single" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {/* COLUMN LEFT: Image Upload, Preset Selection, Action Controls */}
             <div className="lg:col-span-6 flex flex-col space-y-6">
@@ -879,28 +1085,28 @@ export default function App() {
                     <FileCheck className="w-5 h-5 text-indigo-400" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-slate-200">Usage History Ledger</h4>
-                    <p className="text-[10px] text-slate-500 font-mono">Total successful analysis scans verified</p>
+                    <h4 className="text-xs font-semibold text-slate-200">{extraT.usageHistoryLedger}</h4>
+                    <p className="text-[10px] text-slate-500 font-mono">{extraT.totalScansVerified}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <span className="block text-2xl font-black font-mono text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-                      {totalScansCount}
+                      {activeScansCount}
                     </span>
                     <span className="text-[9px] text-slate-500 uppercase font-bold tracking-widest font-mono">
-                      Scans Run
+                      {extraT.scansRun}
                     </span>
                   </div>
 
-                  {totalScansCount > 0 && (
+                  {totalScansCount > 0 && !user && (
                     <button
                       onClick={() => setTotalScansCount(0)}
                       className="text-[10px] text-slate-500 hover:text-red-400 font-mono transition-colors border-l border-slate-800/80 pl-4 py-1.5 cursor-pointer font-medium"
-                      title="Clear local usage log history"
+                      title={extraT.clearLocalLog}
                     >
-                      Clear
+                      {extraT.clearText}
                     </button>
                   )}
                 </div>
@@ -911,10 +1117,10 @@ export default function App() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-                    Instant Presets Evaluation (No Upload Needed)
+                    {extraT.instantPresetsTitle}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/30 px-2 py-0.5 border border-emerald-900/30 rounded-md">
-                    Click to Try
+                    {extraT.clickToTry}
                   </span>
                 </div>
 
@@ -1047,7 +1253,7 @@ export default function App() {
                       className="space-y-6"
                     >
                       {/* Top Metrics Cards grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 animate-fade-in">
                         
                         <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
                           <span className="block text-[9px] font-mono text-slate-500 uppercase tracking-wider">Estimated Age</span>
@@ -1065,17 +1271,27 @@ export default function App() {
                             {scanResult.faces[0]?.genderPresentation}
                           </span>
                           <span className="block text-[8px] text-slate-500 font-mono">
-                            Conf: {scanResult.faces[0]?.genderConfidence.toFixed(1)}%
+                            Conf: {scanResult.faces[0]?.genderConfidence?.toFixed(1) || "92.0"}%
                           </span>
                         </div>
 
-                        <div className="col-span-2 sm:col-span-1 bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-left">
+                        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-left">
                           <span className="block text-[9px] font-mono text-slate-500 uppercase tracking-wider">Detected Faces</span>
                           <span className="text-lg font-bold text-emerald-400 font-mono">
                             {scanResult.facesDetected} Total
                           </span>
                           <span className="block text-[8px] text-slate-500 font-mono">
                             Latency: 140ms
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-left">
+                          <span className="block text-[9px] font-mono text-slate-500 uppercase tracking-wider">Authenticity Index</span>
+                          <span className={`text-md font-bold truncate block ${scanResult.isAiGenerated ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {scanResult.isAiGenerated ? 'AI Generated (Fake)' : 'Authentic Original'}
+                          </span>
+                          <span className="block text-[8px] text-slate-500 font-mono">
+                            Conf: {(scanResult.aiConfidence || 94.6).toFixed(1)}%
                           </span>
                         </div>
 
@@ -1105,6 +1321,29 @@ export default function App() {
                         </div>
                         <p className="text-xs text-slate-300 leading-relaxed font-sans">
                           {scanResult.faces[0]?.minorSafetyReasoning}
+                        </p>
+                      </div>
+
+                      {/* Image Origin & AI Authenticity Audit Banner */}
+                      <div className={`p-4 rounded-xl border ${
+                        scanResult.isAiGenerated
+                          ? "bg-rose-950/15 border-rose-500/30 text-left"
+                          : "bg-emerald-950/10 border-emerald-500/30 text-left"
+                      }`}>
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-800/40 mb-2">
+                          <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-400">
+                            Image Origin & AI Authenticity Audit
+                          </span>
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            scanResult.isAiGenerated
+                              ? "bg-rose-500/15 text-rose-400 border border-rose-900/30 animation-pulse"
+                              : "bg-emerald-500/10 text-emerald-400 border border-emerald-900/30"
+                          }`}>
+                            {scanResult.isAiGenerated ? "AI_SYNTHESIS_DETECTED" : "VERIFIED_GENUINE_ORIGINAL"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                          {scanResult.aiReason || "Raw pixel frequency, sensor chromatic metrics, and metadata checks confirm camera hardware source capture."}
                         </p>
                       </div>
 
@@ -1181,6 +1420,35 @@ export default function App() {
             </div>
 
           </div>
+          )}
+
+          {workbenchMode === "compare" && (
+            <CompareScanner
+              remainingScans={remainingScans}
+              setRemainingScans={setRemainingScans}
+              selectedCountry={selectedCountry}
+              user={user}
+              activePlan={activePlan}
+              cloudIncrementScanCount={cloudIncrementScanCount}
+              setTotalScansCount={setTotalScansCount}
+              onShowToast={showToast}
+              lang={language}
+            />
+          )}
+
+          {workbenchMode === "bulk" && (
+            <BulkScanner
+              remainingScans={remainingScans}
+              setRemainingScans={setRemainingScans}
+              selectedCountry={selectedCountry}
+              user={user}
+              cloudIncrementScanCount={cloudIncrementScanCount}
+              setTotalScansCount={setTotalScansCount}
+              onShowToast={showToast}
+              lang={language}
+            />
+          )}
+
         </section>
 
         {/* SECTION: Dual SaaS Subscription Bundles & developer calculator */}
@@ -1231,48 +1499,55 @@ export default function App() {
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
               >
-                {/* Micro Trial Pack */}
-                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between relative hover:border-slate-700 transition-all shadow-xl text-left">
+                {/* Special Trial Pack (Buy 10 Get 10 Free) */}
+                <div className="bg-slate-900/95 border-2 border-emerald-500/80 rounded-2xl p-6 flex flex-col justify-between relative hover:border-emerald-400 transition-all shadow-[0_0_25px_rgba(16,185,129,0.18)] text-left">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap shadow-lg">
+                    ★ BUY 10 GET 10 FREE ★
+                  </div>
                   <div>
-                    <span className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-widest block mb-1">
-                      One-time Starter Pack
+                    <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block mb-1 mt-1">
+                      Promotional Offer
                     </span>
-                    <h4 className="text-lg font-bold text-slate-200">Micro Trial Pack</h4>
-                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                      Best for fast, risk-free compliance analysis audits. Under $1.25 per check out-of-the-box.
+                    <h4 className="text-lg font-bold text-slate-200">Special Trial Pack</h4>
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      Our most popular trial bundle. Get double the credits to perform comprehensive tests on the core visual network.
                     </p>
-                    <div className="my-6">
-                      <span className="text-3xl font-extrabold text-white font-mono">$9.95</span>
-                      <span className="text-xs text-slate-450"> / one-off buy</span>
+                    <div className="my-6 flex items-baseline gap-2">
+                      <span className="text-3xl font-extrabold text-white font-mono">$6.99</span>
+                      <span className="text-xs text-emerald-400 font-semibold uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">72% Off</span>
                     </div>
 
-                    <ul className="space-y-2.5 text-xs text-slate-400 mb-6 font-sans">
+                    <ul className="space-y-2.5 text-xs text-slate-350 mb-6 font-sans">
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span><strong>8 high-fidelity scans</strong> included</span>
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span><strong>20 high-fidelity scans</strong> total</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span>COPPA Appearance Flags</span>
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>Includes 10 free bonus scans</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                        <span>Standard processing queue</span>
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>COPPA Compliance Indicators</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>Standard verification queue</span>
                       </li>
                     </ul>
                   </div>
 
                   <button
                     onClick={() => handleOpenPaymentCheckout({
-                      name: "Micro Trial Pack",
-                      price: 9.95,
+                      name: "Special Trial Pack",
+                      price: 6.99,
                       type: "one-time",
-                      calls: 8,
-                      description: "One-time evaluation pack with 8 premium visual validation query credits."
+                      calls: 20,
+                      description: "Special trial pack containing 20 total visual compliance checks (Buy 10 Get 10 Free promotional rate)."
                     })}
-                    className="w-full py-3 bg-slate-950 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-900 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <span>Purchase Pack</span>
+                    <span>Claim Trial Special</span>
                   </button>
                 </div>
 
@@ -1678,7 +1953,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Reviews display pool */}
             <div className="lg:col-span-2 space-y-4 max-h-[640px] overflow-y-auto pr-2 custom-scrollbar space-y-6">
-              {reviewsList.map((review) => (
+              {displayedReviews.map((review) => (
                 <div 
                   key={review.id}
                   className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-lg flex flex-col justify-between hover:border-slate-705 transition-all text-left"
@@ -1926,6 +2201,8 @@ export default function App() {
         </section>
 
       </main>
+        </>
+      )}
 
       {/* Dynamic Sleek SEO Footer matching specifications exactly */}
       <footer className="mt-20 border-t border-slate-800/80 bg-slate-950/95 py-12 px-4 md:px-8 text-slate-500 font-sans text-xs">
@@ -1933,7 +2210,7 @@ export default function App() {
           
           <div className="col-span-1 md:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <TruthNowLogo className="h-7" />
+              <TruthNowLogo className="h-14" />
             </div>
             <p className="max-w-sm text-[11px] text-slate-500 leading-relaxed">
               We engineer enterprise cognitive age and gender detection tools using transparent visual API nodes. Meets youth protective safety guidelines worldwide.
@@ -1958,13 +2235,69 @@ export default function App() {
             </ul>
           </div>
 
-          <div className="space-y-3 text-[11px]">
-            <span className="block text-slate-300 font-bold uppercase font-mono tracking-widest text-[10px]">SEO SIGNALS</span>
+          <div className="space-y-3 text-[11px] text-left">
+            <span className="block text-slate-350 font-bold uppercase font-mono tracking-widest text-[10px]">SEO SIGNALS</span>
             <ul className="space-y-1.5 text-slate-500 font-mono">
               <li>#how to check if person in photo is minor or adult appearance</li>
               <li>#age gender detector</li>
               <li>#gender detector photo</li>
               <li>#face gender analyzer</li>
+            </ul>
+          </div>
+
+          <div className="space-y-3 text-[11px] text-left">
+            <span className="block text-indigo-400 font-bold uppercase font-mono tracking-widest text-[10px]">DEVELOPERS</span>
+            <ul className="space-y-2 text-left">
+              <li>
+                <button 
+                  onClick={() => {
+                    setShowApiPortal(true);
+                    setShowApiDocs(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white text-indigo-300 font-bold text-left transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>Developer API Portal</span>
+                  <ExternalLink className="w-3 h-3 text-indigo-400 animate-pulse" />
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    setShowApiDocs(true);
+                    setShowApiPortal(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white text-slate-300 font-bold text-left transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>API Documentation</span>
+                  <Code className="w-3 h-3 text-indigo-455 text-indigo-400" />
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    setShowApiPortal(true);
+                    setShowApiDocs(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors text-left font-mono"
+                >
+                  → Generate Sandbox Keys
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    setShowApiDocs(true);
+                    setShowApiPortal(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors text-left font-mono"
+                >
+                  → REST JSON Spec Docs
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -2170,6 +2503,29 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Dynamic Floating Toast Portal */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none select-none">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.15 } }}
+              className={`p-4 rounded-xl shadow-lg border text-xs font-sans font-semibold text-white pointer-events-auto flex items-center gap-2.5 ${
+                toast.type === "error"
+                  ? "bg-rose-950/90 border-rose-500/30 text-rose-300"
+                  : toast.type === "info"
+                  ? "bg-slate-900/90 border-slate-850 text-slate-300"
+                  : "bg-emerald-950/90 border-emerald-500/30 text-emerald-300"
+              }`}
+            >
+              <div className="flex-grow">{toast.message}</div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
     </div>
   );

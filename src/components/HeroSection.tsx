@@ -1,11 +1,15 @@
 import { motion } from "motion/react";
 import { Shield, Sparkles, Zap, Globe, FileCheck } from "lucide-react";
+import { translations, Language } from "../translations";
 
 interface HeroSectionProps {
   onScrollToScanner: () => void;
+  lang: Language;
 }
 
-export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
+export default function HeroSection({ onScrollToScanner, lang }: HeroSectionProps) {
+  const t = translations[lang].hero;
+
   return (
     <section className="relative overflow-hidden pt-12 pb-16 md:pt-16 md:pb-24 bg-slate-950 text-slate-100">
       {/* Aurora Ambient Orbs */}
@@ -24,7 +28,7 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
               className="inline-flex items-center gap-2 bg-slate-900/95 border border-slate-800 rounded-full py-1 px-3 w-fit text-slate-300 text-xs font-mono"
             >
               <Sparkles className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
-              <span>Next-Generation Cognitive Engine</span>
+              <span>{t.tagline}</span>
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
               <span className="text-emerald-400 uppercase font-bold tracking-widest text-[9px]">Live 3.5</span>
             </motion.div>
@@ -33,11 +37,11 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-sans tracking-tight leading-tight text-white font-semibold"
+              className="text-4xl sm:text-5xl lg:text-6xl font-sans tracking-tight leading-tight text-white font-semibold animate-fade-in"
             >
-              Face, Sex, & Age <br />
+              {t.titleMain} <br />
               <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
-                Recognition Suite
+                {t.titleGradient}
               </span>
             </motion.h1>
 
@@ -47,9 +51,7 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-base sm:text-lg text-slate-400 max-w-xl leading-relaxed font-sans"
             >
-              Deploy enterprise cognitive visual analysis instantly. Learn 
-              <strong className="text-slate-200"> how to check if a person in a photo is minor or adult appearance</strong>, 
-              determine visual gender traits, and run real-time biometric-safe geographic compliance audits automatically.
+              {t.subtitle}
             </motion.p>
 
             {/* Keyword tags / SEO anchor indicators */}
@@ -60,9 +62,9 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
               className="flex flex-wrap gap-2 text-[11px] font-mono text-slate-500"
             >
               <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#age gender detector</span>
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#gender detector photo</span>
+              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#real or ai image verification</span>
+              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#fake or not checker</span>
               <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#face gender analyzer</span>
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#gender detection from image</span>
             </motion.div>
 
             {/* CTA Controls */}
@@ -80,7 +82,7 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <span className="relative z-10 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide">
                   <Zap className="w-4 h-4 text-slate-950 fill-slate-950" />
-                  Try Live Face Scanner
+                  {t.btnTryScanner}
                 </span>
               </button>
               
@@ -89,7 +91,7 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
                 className="flex items-center justify-center gap-2 border border-slate-800 bg-slate-950/20 hover:bg-slate-900/40 text-slate-300 font-medium px-8 py-4 rounded-lg hover:text-white hover:border-slate-700 transition-colors text-sm text-center"
               >
                 <Globe className="w-4 h-4 text-slate-400" />
-                View Enterprise Pricing
+                {t.btnPricing}
               </a>
             </motion.div>
 
@@ -101,16 +103,16 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
               className="grid grid-cols-3 gap-4 border-t border-slate-900 pt-8 mt-4 text-left"
             >
               <div>
-                <span className="block text-2xl font-semibold text-white font-mono">99.8%</span>
-                <span className="text-xs text-slate-500 font-sans font-medium">Model Precision</span>
+                <span className="block text-2xl font-semibold text-white font-mono">{t.metricPrecision}</span>
+                <span className="text-xs text-slate-500 font-sans font-medium">{t.metricPrecisionLabel}</span>
               </div>
               <div>
-                <span className="block text-2xl font-semibold text-white font-mono">140ms</span>
-                <span className="text-xs text-slate-500 font-sans font-medium">Crawl API Latency</span>
+                <span className="block text-2xl font-semibold text-white font-mono">{t.metricLatency}</span>
+                <span className="text-xs text-slate-500 font-sans font-medium">{t.metricLatencyLabel}</span>
               </div>
               <div>
-                <span className="block text-2xl font-semibold text-white font-mono">Zero</span>
-                <span className="text-xs text-slate-500 font-sans font-medium">Data Retention</span>
+                <span className="block text-2xl font-semibold text-white font-mono">{t.metricRetention}</span>
+                <span className="text-xs text-slate-500 font-sans font-medium">{t.metricRetentionLabel}</span>
               </div>
             </motion.div>
           </div>
@@ -125,7 +127,7 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
             >
               {/* Fake UI Screen with active face scan visualizer */}
               <div className="absolute -top-3 -right-3 bg-cyan-500 text-slate-950 text-[10px] font-bold px-2 py-1 rounded-md tracking-wider shadow font-mono">
-                SECURE SCANNER ACTIVE
+                {t.secureScannerActive}
               </div>
 
               {/* Mock Image Box */}
@@ -152,14 +154,14 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
                   {/* Glowing text anchor */}
                   <div className="absolute bg-emerald-900/95 border border-emerald-500 text-emerald-300 text-[10px] font-mono py-1 px-2 rounded-md -bottom-4 shadow-lg flex items-center gap-1.5 whitespace-nowrap">
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                    <span>Candidate #1: Female Presentation</span>
+                    <span>{t.candidatePresentation}: Female</span>
                   </div>
                 </div>
 
                 {/* Left indicators */}
                 <div className="absolute top-4 left-4 flex flex-col gap-1 text-[9px] font-mono text-slate-400 bg-slate-950/85 backdrop-blur-md px-2 py-1.5 rounded-lg border border-slate-800">
-                  <span className="text-cyan-400 font-bold">DETECTION CORE</span>
-                  <span>AGE: 22-26</span>
+                  <span className="text-cyan-400 font-bold">{t.detectionCore}</span>
+                  <span>{t.ageRange}: 22-26</span>
                   <span>CONF: 98.4%</span>
                 </div>
 
@@ -174,15 +176,15 @@ export default function HeroSection({ onScrollToScanner }: HeroSectionProps) {
                 <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/60 text-slate-300 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div>
-                    <span className="block text-[8px] text-slate-500 font-semibold uppercase">Geo Policy</span>
-                    <span className="text-[10px] text-white">GDPR Compliant</span>
+                    <span className="block text-[8px] text-slate-500 font-semibold uppercase">{t.geoPolicy}</span>
+                    <span className="text-[10px] text-white">{t.gdprCompliant}</span>
                   </div>
                 </div>
                 <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/60 text-slate-300 flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-cyan-400 shrink-0" />
                   <div>
-                    <span className="block text-[8px] text-slate-500 font-semibold uppercase">Classification</span>
-                    <span className="text-[10px] text-white">EPHEMERAL SAFE</span>
+                    <span className="block text-[8px] text-slate-500 font-semibold uppercase">{t.classification}</span>
+                    <span className="text-[10px] text-white">{t.ephemeralSafe}</span>
                   </div>
                 </div>
               </div>
