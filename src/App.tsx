@@ -1,8 +1,4 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Camera, Upload, Shield, Sparkles, Zap, Globe, FileCheck, 
@@ -10,22 +6,22 @@ import {
   ArrowRight, Heart, ExternalLink, Moon, Eye, AlertCircle, Info, Trash2,
   ZoomIn, ZoomOut, Code, Copy, Plus, ArrowLeft, Key, Terminal, BookOpen, Layers, Check, KeyRound, Server, Scale
 } from "lucide-react";
-import { FaceData, ScanResponse, ClientReview, FaqItem, DevApiKey } from "@/types";
-import HeroSection from "@/components/HeroSection";
-import DeveloperPortal from "@/components/DeveloperPortal";
-import ApiDocs from "@/components/ApiDocs";
-import { TruthNowLogo } from "@/components/TruthNowLogo";
-import { useFirebase } from "@/components/FirebaseProvider";
-import CompareScanner from "@/components/CompareScanner";
-import BulkScanner from "@/components/BulkScanner";
-import { translations, Language } from "@/translations";
+import { FaceData, ScanResponse, ClientReview, FaqItem, DevApiKey } from "./types";
+import HeroSection from "./components/HeroSection";
+import DeveloperPortal from "./components/DeveloperPortal";
+import ApiDocs from "./components/ApiDocs";
+import { TruthNowLogo } from "./components/TruthNowLogo";
+import { useFirebase } from "./components/FirebaseProvider";
+import CompareScanner from "./components/CompareScanner";
+import BulkScanner from "./components/BulkScanner";
+import { translations, Language } from "./translations";
 import { 
   GEO_OPTIONS_LOCALIZED, 
   PRESET_MOCK_PORTRAITS_LOCALIZED, 
   FAQS_DATA, 
   USER_REVIEWS_INITIAL_DATA, 
   MAIN_EXTRA_TRANSLATIONS 
-} from "@/localesData";
+} from "./localesData";
 
 
 export default function App() {
@@ -47,11 +43,8 @@ export default function App() {
   const [showApiPortal, setShowApiPortal] = useState<boolean>(false);
   const [showApiDocs, setShowApiDocs] = useState<boolean>(false);
   const [apiKeys, setApiKeys] = useState<DevApiKey[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem("truthnowai_api_keys");
-      if (saved) return JSON.parse(saved);
-    }
-    return [
+    const saved = localStorage.getItem("truthnowai_api_keys");
+    return saved ? JSON.parse(saved) : [
       {
         id: "key_initial",
         name: "Sandbox Testing Token",
@@ -71,11 +64,8 @@ export default function App() {
   const [isPreviewZoomed, setIsPreviewZoomed] = useState<boolean>(false);
   const [isResetConfirmed, setIsResetConfirmed] = useState<boolean>(false);
   const [totalScansCount, setTotalScansCount] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("truthnowai_total_scans_count");
-      return saved ? parseInt(saved, 10) : 0;
-    }
-    return 0;
+    const saved = localStorage.getItem("truthnowai_total_scans_count");
+    return saved ? parseInt(saved, 10) : 0;
   });
 
   useEffect(() => {
@@ -92,11 +82,8 @@ export default function App() {
   const [activePlan, setActivePlan] = useState<string>("Free Demo Plan");
   const [pricingMode, setPricingMode] = useState<"saas" | "api">("saas");
   const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("truthnowai_language");
-      return (saved as Language) || "en";
-    }
-    return "en";
+    const saved = localStorage.getItem("truthnowai_language");
+    return (saved as Language) || "en";
   });
 
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState<boolean>(false);
@@ -458,6 +445,70 @@ export default function App() {
     }, 850);
   };
 
+  // WebMCP Integration: Expose tools to AI agents via the browser per browser spec
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const nav = window.navigator as any;
+      if (nav.modelContext && typeof nav.modelContext.registerTool === "function") {
+        try {
+          const controller = new AbortController();
+          const signal = controller.signal;
+
+          nav.modelContext.registerTool({
+            name: "scan_preset_portrait",
+            description: "Instantly evaluate a preset demo portrait (Corporate Executive, Toddler, Teenager, Senior, or AI Model) to trigger a cognitive visualization scan.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                presetId: {
+                  type: "string",
+                  description: "One of: preset_adult_female, preset_toddler, preset_teen_border, preset_senior, preset_ai_generated"
+                }
+              },
+              required: ["presetId"]
+            },
+            execute: async ({ presetId }: { presetId: string }) => {
+              const presetMatched = PRESET_MOCK_PORTRAITS.find(p => p.id === presetId);
+              if (presetMatched) {
+                handleLoadPresetMock(presetMatched);
+                return { success: true, message: `Loaded preset portrait: ${presetMatched.name}` };
+              }
+              return { success: false, message: `Preset photo ID '${presetId}' not found.` };
+            }
+          }, { signal });
+
+          nav.modelContext.registerTool({
+            name: "change_interface_language",
+            description: "Change the platform visual language dynamically.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                langCode: {
+                  type: "string",
+                  description: "Language code: en, es, fr, de, ja"
+                }
+              },
+              required: ["langCode"]
+            },
+            execute: async ({ langCode }: { langCode: string }) => {
+              if (["en", "es", "fr", "de", "ja"].includes(langCode)) {
+                setLanguage(langCode as any);
+                return { success: true, message: `Language successfully updated to: ${langCode.toUpperCase()}` };
+              }
+              return { success: false, message: `Invalid language code ${langCode}.` };
+            }
+          }, { signal });
+
+          return () => {
+            controller.abort();
+          };
+        } catch (err) {
+          console.warn("Error registering WebMCP tools:", err);
+        }
+      }
+    }
+  }, [PRESET_MOCK_PORTRAITS, language]);
+
   // Reset tool screen
   const handleResetScanner = () => {
     setIsResetConfirmed(true);
@@ -473,9 +524,20 @@ export default function App() {
   };
 
   // Paypal simulated interactive checkout methods
-  const router = useRouter();
-  const handleOpenPaymentCheckout = (plan: any) => {
-    router.push('/pricing');
+  const handleOpenPaymentCheckout = (plan: {
+    name: string;
+    price: number;
+    type: "one-time" | "subscription";
+    calls: number;
+    description: string;
+  }) => {
+    setSelectedPlanDetails(plan);
+    setCheckoutStep("init");
+    setPaypalEmail("");
+    setPaypalPassword("");
+    setPaypalError("");
+    setPaypalAgreed(true);
+    setIsCheckoutOpen(true);
   };
 
   const handleSimulatedPayPalPurchase = (e: React.FormEvent) => {
@@ -736,12 +798,18 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <Link 
-              href="/login"
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer font-sans shadow-lg shadow-indigo-500/20"
+            <button 
+              onClick={signInWithGoogle}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-100 text-slate-950 rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer font-sans shadow-lg hover:shadow-white/5"
             >
-              <span>Login / Register</span>
-            </Link>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                <path fill="#EA4335" d="M22.86 12.3c0-.82-.07-1.61-.21-2.38H12v4.51h6.08a5.2 5.2 0 0 1-2.25 3.41v2.84h3.64c2.13-1.96 3.39-4.85 3.39-8.38z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.64-2.84c-1.01.68-2.3 1.08-3.64 1.08-2.81 0-5.18-1.9-6.03-4.46H2.18v2.93A11 11 0 0 0 12 23z" />
+                <path fill="#FBBC05" d="M5.97 14.12A6.6 6.6 0 0 1 5.5 12c0-.74.13-1.46.36-2.12V6.95H2.18A11 11 0 0 0 1 12c0 1.83.45 3.56 1.25 5.08l2.72-2.12V14.12z" />
+                <path fill="#4285F4" d="M5.97 9.88c.85-2.56 3.22-4.46 6.03-4.46 1.61 0 3.06.56 4.2 1.63l3.14-3.14A11 11 0 0 0 12 1c-4.41 0-8.23 2.58-10 6.34l3.97 3.08c0-.18 0-.36.2-.54z" />
+              </svg>
+              <span>{t.nav.googleSync}</span>
+            </button>
           )}
         </div>
       </header>

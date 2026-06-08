@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { 
   User, 
@@ -82,7 +80,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             userDocSnap = await getDoc(userDocRef);
           } catch (err) {
             handleFirestoreError(err, OperationType.GET, `users/${srvUser.uid}`);
-            return; // Skip profile creation if the read failed
           }
 
           if (!userDocSnap.exists()) {
