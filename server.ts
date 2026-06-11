@@ -580,14 +580,14 @@ function getGeminiClient(): GoogleGenAI | null {
 app.get("/robots.txt", (req, res) => {
   res.type("text/plain");
   res.send(
-    `# Sitemaps and crawler instructions for TruthNowAI.com\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${process.env.APP_URL || "https://truthnowai.com"}/sitemap.xml`
+    `# Sitemaps and crawler instructions for TruthNowAI.com\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://truthnowai.com/sitemap.xml`
   );
 });
 
 // /sitemap.xml
 app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml");
-  const siteUrl = process.env.APP_URL || "https://truthnowai.com";
+  const siteUrl = "https://truthnowai.com";
   const dateStr = new Date().toISOString().split("T")[0];
   
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -597,6 +597,12 @@ app.get("/sitemap.xml", (req, res) => {
     <lastmod>${dateStr}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/docs/api</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>`);
 });
