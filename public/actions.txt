@@ -1,0 +1,73 @@
+================================================================================
+                               TRUTHNOWAI ACTIONS
+================================================================================
+                    Agent-Permissions & Action Capabilities
+
+This file specifies what inputs, forms, and tools are available, their output
+formats, and the strict guardrails defining what an AI agent is authorized to 
+do on candidate systems.
+
+1. CAPABILITY: BIOMETRIC PHOTO ANALYSIS
+---------------------------------------
+A. Input Parameters:
+   - `imageBase64` (Standard data-URI formatted Base64 string of a portrait)
+   - `userCountrySim` (ISO 2-letter country code, e.g. "US", "GB", "EU", "CA")
+B. Process Flow:
+   - Evaluates multi-spectral facial details.
+   - Diagnoses age range, category, and gender confidence.
+   - Gauges AI-generative deepfake fingerprints.
+C. Output:
+   - Returns a detailed compliance JSON record including estimated age, 
+     demographic aspect metrics, and regional regulatory safety advice.
+D. Authorization Level:
+   - Fully authorized for automated execution and API access by registered 
+     agents under standard sandbox/test limits.
+
+2. CAPABILITY: COMPARATIVE FACE MATCHING
+---------------------------------------
+A. Input Parameters:
+   - `sourceImage` (Base64 string of primary reference portrait / ID card)
+   - `targetImage` (Base64 string of candidate comparison portrait)
+B. Process Flow:
+   - Extracts localized nodal maps for both faces.
+   - Computes overall resemblance vector.
+C. Output:
+   - Resemblance metric (e.g., "94.6% Similar Match") along with positive match flags.
+D. Authorization Level:
+   - Authorized for automated and user-guided checks.
+
+3. CAPABILITY: INLINE CREDENTIALING (SANDBOX)
+---------------------------------------------
+A. Input Parameters:
+   - Triggering "Generate New Token" button from the Developer Workspace UI.
+B. Output:
+   - Generates a transient valid API Bearer key beginning with `tn_sandbox_`.
+C. Authorization Level:
+   - AI agents are authorized to generate new sandbox tokens and use them for 
+     re-verifying active sessions or executing test scripts.
+
+4. CAPABILITY: MOCK ERROR INJECTION (PLAYGROUND TESTING)
+--------------------------------------------------------
+A. Input Parameters:
+   - Modifying "Inject API Error" option via the UI, or passing 
+     `x-simulate-error` within custom REST headers.
+B. Output:
+   - Simulates 401 Unauthorized or 429 Rate-Limit status response codes.
+C. Authorization Level:
+   - Crucial for agent diagnostic compliance. Agents are encouraged to test this
+     to ensure correct exponential retry and validation workflows.
+
+
+5. AGENT PERMISSIONS & SAFETY ACTIONS DECORATORS
+------------------------------------------------
+- DATA COLLECTION LIMITS: TruthNowAI operates in fully private transient mode. 
+  Images sent via `/api/scan` are evaluated in volatile cache memories and are 
+  immediately purged upon output formulation. Agents must not attempt to seed 
+  permanent records of biometric payloads.
+- DESTRUCTIVE ACTIONS: There are NO destructive state endpoints (e.g., delete, 
+  truncate, erase accounts). Database entries do not exist for public photos. 
+  Agents may safely clear localStorage tokens if testing session resets is 
+  desired.
+- TRAFFIC FLOOD SAFEGUARDS: All key structures rate-limit to 60 queries/min. 
+  Agents must implement compliant cool-downs on receiving HTTP 429 replies.
+================================================================================

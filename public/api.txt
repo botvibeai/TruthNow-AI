@@ -1,0 +1,114 @@
+================================================================================
+                               TRUTHNOWAI API
+================================================================================
+                    Developer & Agent Integration Document
+
+1. API ENDPOINTS
+---------------
+
+A. Scan Portrait Metrics
+   - Method: POST
+   - Path: `/api/scan`
+   - Description: Evaluates a single facial photo, identifies biometrics (age, 
+     gender confidence, minor classification code), checks for AI‑generative 
+     deepfake markers, and compiles compliance statuses.
+
+B. Auto-Register Agent
+   - Method: POST
+   - Path: `/api/agent/register`
+   - Description: Registers an autonomous AI agent for authentication, returning 
+     API client credentials.
+
+C. OpenAPI Definition JSON
+   - Method: GET
+   - Path: `/docs/openapi.json`
+   - Description: Returns a fully-compliant OpenAPI 3.0 specification.
+
+D. Health & State Checks
+   - Method: GET
+   - Path: `/api/health`
+   - Description: Verify service status, uptime, and database availability.
+
+
+2. SCHEMAS & PARAMETERS
+----------------------
+
+A. POST `/api/scan` REQUEST SPECIFICATION (JSON)
+   - `imageBase64` (string, required): Base64-encoded image string with standard data URI mime prefix (e.g. "data:image/jpeg;base64,...").
+   - `mimeType` (string, optional): "image/jpeg", "image/png", or "image/webp".
+   - `userCountrySim` (string, optional): Simulates compliance analysis under dynamic jurisdictions (e.g. "US", "GB", "EU", "CA").
+
+B. POST `/api/scan` RESPONSE SPECIFICATION (JSON)
+   - `facesDetected` (number): Number of distinct biometric structures located.
+   - `isAiGenerated` (boolean): Flag indicating deepfake or synthetic indicators.
+   - `aiConfidence` (number): Similarity percentage matching generative models.
+   - `faces` (array): List of face features:
+     * `estimatedAge` (number): Numeric physical maturity index.
+     * `ageRange` (string): Boundary range (e.g., "22-27").
+     * `ageCategory` (string): "Child", "Teenager", "Young Adult", or "Adult".
+     * `genderPresentation` (string): "Female" or "Male".
+     * `genderConfidence` (number): Confidence probability percentage.
+     * `minorAppearanceSafetyCode` (string): "SURE_MINOR", "ALERT_MINOR_APPEARANCE", or "PASS_ADULT_APPEARANCE".
+     * `minorSafetyReasoning` (string): Textual explanation of facial maturity.
+   - `geoCompliance` (object): Compliance ledger containing target country laws.
+
+
+3. AUTHENTICATION
+-----------------
+All REST calls to `/api/scan` from third-party clients require a Bearer token in 
+the HTTP Request Authorization header:
+Format:
+  `Authorization: Bearer <API_KEY>`
+
+Example API Keys for development / sandboxing:
+- `tn_test_a4b9c1d0e5f67890abcdef123y7` (Active Sandbox Key)
+- Keys starting with `tn_live_`, `tn_test_`, or `tn_sandbox_` (min length 20).
+
+Testing Error Scenarios:
+Include the header `x-simulate-error: 401` or `x-simulate-error: 429` to test
+your agent's error resolution code paths.
+
+
+4. CURL REQUEST EXAMPLE
+-----------------------
+```bash
+curl -X POST "https://truthnowai.com/api/scan" \
+  -H "Authorization: Bearer tn_test_a4b9c1d0e5f67890abcdef123y7" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageBase64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+    "mimeType": "image/jpeg",
+    "userCountrySim": "US"
+  }'
+```
+
+5. EXPECTED RESPONSE EXAMPLE
+----------------------------
+```json
+{
+  "facesDetected": 1,
+  "isAiGenerated": false,
+  "aiConfidence": 98.2,
+  "aiReason": "Authentic camera-captured photograph. Core optical sensor noise verified.",
+  "faces": [
+    {
+      "estimatedAge": 24,
+      "ageRange": "22-27",
+      "ageCategory": "Young Adult",
+      "genderPresentation": "Male",
+      "genderConfidence": 91.2,
+      "minorAppearanceSafetyCode": "PASS_ADULT_APPEARANCE",
+      "minorSafetyReasoning": "Confirmed adult appearance (18+)."
+    }
+  ],
+  "geoCompliance": {
+    "country": "United States",
+    "jurisdiction": "CCPA/COPPA Double-Maturity Assurance Rules",
+    "scannerComplianceCode": "SECURE-US-COPPA-18",
+    "mandatoryRetentionLimitHours": 0,
+    "dataPolicyNote": "Transient processing holds zero record."
+  },
+  "processedAt": "2026-06-11T05:30:00.000Z"
+}
+```
+================================================================================

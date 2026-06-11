@@ -42,6 +42,64 @@ export default function App() {
 
   const [showApiPortal, setShowApiPortal] = useState<boolean>(false);
   const [showApiDocs, setShowApiDocs] = useState<boolean>(false);
+
+  // Synchronize client-side view state with URL paths (for deep linking e.g. from sitemaps, search results, and agent discovery)
+  useEffect(() => {
+    const handleNavigation = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === "/developer" || hash === "#developer") {
+        setShowApiPortal(true);
+        setShowApiDocs(false);
+      } else if (path === "/docs/api" || hash === "#docs-api" || hash === "#docs" || hash === "#api") {
+        setShowApiDocs(true);
+        setShowApiPortal(false);
+      } else {
+        setShowApiPortal(false);
+        setShowApiDocs(false);
+        if (hash) {
+          const eleId = hash.slice(1);
+          const element = document.getElementById(eleId);
+          if (element) {
+            setTimeout(() => {
+              element.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          }
+        }
+      }
+    };
+
+    // Initialize state on mount
+    handleNavigation();
+
+    // Listen for state changes (e.g. back button)
+    window.addEventListener("popstate", handleNavigation);
+    window.addEventListener("hashchange", handleNavigation);
+    
+    return () => {
+      window.removeEventListener("popstate", handleNavigation);
+      window.removeEventListener("hashchange", handleNavigation);
+    };
+  }, []);
+
+  // Synchronize URL paths when tabs change from internal clicks
+  useEffect(() => {
+    const currentLoc = window.location.pathname;
+    if (showApiPortal) {
+      if (currentLoc !== "/developer") {
+        window.history.pushState(null, "", "/developer");
+      }
+    } else if (showApiDocs) {
+      if (currentLoc !== "/docs/api") {
+        window.history.pushState(null, "", "/docs/api");
+      }
+    } else {
+      if (currentLoc !== "/" && currentLoc !== "/index.html") {
+        window.history.pushState(null, "", "/");
+      }
+    }
+  }, [showApiPortal, showApiDocs]);
+
   const [apiKeys, setApiKeys] = useState<DevApiKey[]>(() => {
     const saved = localStorage.getItem("truthnowai_api_keys");
     return saved ? JSON.parse(saved) : [
@@ -1973,8 +2031,9 @@ export default function App() {
               ) : (
                 <form onSubmit={handleSubmitReview} className="space-y-4 font-sans text-xs">
                   <div className="space-y-1">
-                    <label className="text-slate-400 font-semibold block">Full Name / Issuer</label>
+                    <label htmlFor="review-author" className="text-slate-400 font-semibold block">Full Name / Issuer</label>
                     <input 
+                      id="review-author"
                       type="text"
                       required
                       placeholder="e.g. Dr. Aris Thorne"
@@ -1986,8 +2045,9 @@ export default function App() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-slate-400 font-semibold block">Designation / Role</label>
+                      <label htmlFor="review-role" className="text-slate-400 font-semibold block">Designation / Role</label>
                       <input 
+                        id="review-role"
                         type="text"
                         placeholder="e.g. Compliance Officer"
                         value={reviewRole}
@@ -1996,8 +2056,9 @@ export default function App() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-slate-400 font-semibold block">Institution / Org</label>
+                      <label htmlFor="review-company" className="text-slate-400 font-semibold block">Institution / Org</label>
                       <input 
+                        id="review-company"
                         type="text"
                         placeholder="e.g. SafeWeb Labs"
                         value={reviewCompany}
@@ -2009,11 +2070,12 @@ export default function App() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1 col-span-2">
-                      <label className="text-slate-400 font-semibold block">Rating Performance</label>
+                      <label htmlFor="review-rating" className="text-slate-400 font-semibold block">Rating Performance</label>
                       <select 
+                        id="review-rating"
                         value={reviewRating}
                         onChange={(e) => setReviewRating(Number(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 focus:outline-none focus:border-indigo-500"
+                        className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 text-slate-300 focus:outline-none focus:border-indigo-500"
                       >
                         <option value="5">5 Stars (Excellent)</option>
                         <option value="4">4 Stars (Great)</option>
@@ -2023,8 +2085,9 @@ export default function App() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-slate-400 font-semibold block">Review Sentiment / Findings</label>
+                    <label htmlFor="review-text" className="text-slate-400 font-semibold block">Review Sentiment / Findings</label>
                     <textarea 
+                      id="review-text"
                       required
                       rows={3}
                       placeholder="e.g. Tested this face gender analyzer with our regional compliance standards..."

@@ -1,0 +1,128 @@
+================================================================================
+                               TRUTHNOWAI ROUTES
+================================================================================
+                    Core Application Site Map & Structure
+
+This file provides automated agents with a comprehensive map of all routing
+paths, formats, HTTP verbs, and returned media types.
+
+1. WEB PAGES (HUMAN ACCESSIBLE & SPAS)
+--------------------------------------
+
+A. User Workspace & Face Compare Sandbox
+   - Path: `/`
+   - Method: GET
+   - Output: `text/html` (Single-page app markup)
+   - Description: The centralized cognitive portal. Houses interactive widgets 
+     including the Single-Scan Biometrics Sandbox, Side-by-Side Face Comparison, 
+     Live Camera Analyzer, and Document-Processing directories.
+   - Note: Supports content negotiation. Requesting with headers 
+     `Accept: text/markdown` returns a summary markdown card.
+
+B. Developer Hub & Credentials Portal
+   - Path: `/developer`
+   - Method: GET
+   - Output: `text/html`
+   - Description: Deep links directly to the credentials hub to issue sandbox 
+     tokens, inspect client logs, test simulating mock REST calls, or clear active keys.
+
+C. API Documentation Visualizer
+   - Path: `/docs/api`
+   - Method: GET
+   - Output: `text/html`
+   - Description: Deep links to a responsive developer guide featuring schemas, 
+     error guides, mock requests, and code snippet snippets.
+   - Note: Requesting with header `Accept: text/markdown` returns MD format.
+
+
+2. MACHINE DISCOVERY & COMPLIANCE METADATA
+------------------------------------------
+
+A. Robots.txt Crawler Instructions
+   - Path: `/robots.txt`
+   - Method: GET
+   - Output: `text/plain`
+   - Description: Controls search engine spiders and lists preferred AI training 
+     content signals (e.g. Content-Signal: ai-train=no).
+
+B. Sitemap Directory List
+   - Path: `/sitemap.xml`
+   - Method: GET
+   - Output: `application/xml`
+   - Description: Dynamic XML sitemap listing human interfaces and active agent 
+     specifications.
+
+C. Well-Known API Catalog Linkset
+   - Path: `/.well-known/api-catalog`
+   - Method: GET
+   - Output: `application/linkset+json`
+   - Description: RFC 9727 standard array linking directly to API endpoints, 
+     authoritative OpenAPI specifications, and support status files.
+
+D. Model Context Protocol Server Card
+   - Path: `/.well-known/mcp/server-card.json`
+   - Method: GET
+   - Output: `application/json`
+   - Description: SEP-1649 specification displaying transport layers and tool 
+     definitions for LLM integrations.
+
+E. OAuth 2.0 Authorization Server Configuration
+   - Path: `/.well-known/oauth-authorization-server`
+   - Method: GET
+   - Output: `application/json`
+   - Description: RFC 8414 standardized authorization server metadata (issuer, 
+     authorization/token endpoints, response types).
+
+F. OAuth Protected Resource Specification
+   - Path: `/.well-known/oauth-protected-resource`
+   - Method: GET
+   - Output: `application/json`
+   - Description: RFC 9728 metadata map stating which external scopes protect `/api/scan`.
+
+G. OpenID Connect Discovery Profile
+   - Path: `/.well-known/openid-configuration`
+   - Method: GET
+   - Output: `application/json`
+   - Description: Standard discoverable endpoints for OIDC metadata.
+
+H. Agent Skills Index File
+   - Path: `/.well-known/agent-skills/index.json`
+   - Method: GET
+   - Output: `application/json`
+   - Description: Index outlining registered AI agent capabilities and 
+     cognitive instructions.
+
+I. Agent Auth Manual Registration Specifications
+   - Path: `/auth.md`
+   - Method: GET
+   - Output: `text/markdown`
+   - Description: Explains manual agent token configurations, identity proofs, 
+     and registration options.
+
+
+3. REST SERVICE ENDPOINTS (SERVER & DATA)
+-----------------------------------------
+
+A. Biometric Scan & Deepfake Analysis Pipeline
+   - Path: `/api/scan`
+   - Method: POST
+   - Accepts: `application/json`
+   - Returns: `application/json`
+   - Requires: `Authorization: Bearer <API_KEY>`
+
+B. Agent Auto-Registration
+   - Path: `/api/agent/register`
+   - Method: POST
+   - Accepts: `application/json`
+   - Returns: `application/json`
+
+C. API OpenAPI 3.0 Manifest JSON
+   - Path: `/docs/openapi.json`
+   - Method: GET
+   - Returns: `application/json`
+
+D. API Services Health Check
+   - Path: `/api/health`
+   - Method: GET
+   - Returns: `application/json`
+================================================================================

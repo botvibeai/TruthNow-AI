@@ -1347,6 +1347,7 @@ export default function BulkScanner({
                 <input
                   type="text"
                   placeholder="Search file reports..."
+                  aria-label="Search file reports"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-850 focus:border-indigo-500 hover:border-slate-800 transition-colors focus:ring-1 focus:ring-indigo-500/20 text-slate-200 text-xs rounded-xl focus:outline-none placeholder-slate-500 font-medium"
@@ -1361,6 +1362,7 @@ export default function BulkScanner({
                   <Filter className="w-3.5 h-3.5 text-slate-550 mr-1" />
                   <span className="text-[10px] font-mono uppercase text-slate-500">Gender:</span>
                   <select
+                    aria-label="Filter by Gender"
                     value={filterGender}
                     onChange={(e) => setFilterGender(e.target.value)}
                     className="bg-transparent text-slate-300 font-semibold focus:outline-none text-[10px] cursor-pointer"
@@ -1376,6 +1378,7 @@ export default function BulkScanner({
                 <div className="flex items-center gap-1 bg-slate-900 border border-slate-850 px-2.5 py-1 rounded-xl">
                   <span className="text-[10px] font-mono uppercase text-slate-500">Compliance:</span>
                   <select
+                    aria-label="Filter by Compliance Option"
                     value={filterCompliance}
                     onChange={(e) => setFilterCompliance(e.target.value)}
                     className="bg-transparent text-slate-300 font-semibold focus:outline-none text-[10px] cursor-pointer"
@@ -1391,6 +1394,7 @@ export default function BulkScanner({
                 <div className="flex items-center gap-1 bg-slate-900 border border-slate-850 px-2.5 py-1 rounded-xl">
                   <span className="text-[10px] font-mono uppercase text-slate-500">Source:</span>
                   <select
+                    aria-label="Filter by Image Authenticity Source"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                     className="bg-transparent text-slate-300 font-semibold focus:outline-none text-[10px] cursor-pointer"

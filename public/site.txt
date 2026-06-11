@@ -1,0 +1,55 @@
+================================================================================
+                                 TRUTHNOWAI
+================================================================================
+                      Human-Readable Platform Overview
+
+1. WHAT THE SITE IS
+------------------
+TruthNowAI is a state-of-the-art cognitive visual compliance, multi-spectral 
+biometric analysis, and face-comparison software platform. It is engineered to 
+authenticate face matches, verify demographic aspects, evaluate facial age 
+ranges, flag potential minor vs. adult status, and audit deepfake or neural 
+generative generative integrity.
+
+2. WHAT IT DOES
+--------------
+- Single Photo Sandbox: Computes estimated age classification, age category, 
+  gender presentation aspect, AI-generated vs. organic camera original 
+  confidence, and compliance metrics.
+- Biometric Face Comparison: Match facial templates between a source (e.g. 
+  government ID, profile photo) and candidate image to compute high-accuracy 
+  similarity percentage.
+- Compliance Check: Formulates compliance safety records based on local target
+  regimes (COPPA, CCPA, EU-GDPR, PIPEDA) to flag minors for protected products
+  or content restrictions.
+- Bulk Scanner Portal: Audits directories of images to produce downloadable 
+  reports on deepfake risks and regulatory metrics in parallel.
+- Developer Integration Portal: Issues sandboxed auth tokens to let automated 
+  or external systems query biometrics on corporate servers.
+
+3. WHO IT IS FOR
+---------------
+- Compliance & Safety Officers: Operators verifying legal age requirements 
+  (e.g., age-restricted sites, protected forums) without storing original 
+  biometric files.
+- Developers & System Architects: Modern teams wanting a fast, drop-in REST 
+  JSON API for real-time age classification and face matching.
+- AI Agents & Automated Clients: Autonomous searchers and API aggregators 
+  discovering API capabilities, metadata formats, and machine-registration specs.
+
+4. HOW TO USE IT
+---------------
+- Interactive Inspection Workspace (Sandbox): 
+  Upload files via drag-and-drop or start the front-facing webcam. The client 
+  processes the portrait, computes biometric details, overlays geometric face 
+  annotations, and displays raw compliance JSON.
+- Comparative Matrix (Face Match):
+  Upload Source and Target portraits to evaluate the similarity percentage 
+  along with matching indicators.
+- Bulk Processing: 
+  Import a folder containing multiple facial assets to evaluate batch risk profiles.
+- Developer & Agent Playgrounds:
+  Use active credentials inside the inline API Console to trigger custom 
+  regulatory states, inspect open-standards catalogs, download OpenAPI 
+  specifications, or execute mock error states (401 Unauthorized / 429 Limit).
+================================================================================

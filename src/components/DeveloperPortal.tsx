@@ -585,10 +585,11 @@ print("Response JSON:", response.json())`;
             {/* Input elements */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
+                <label htmlFor="auth-key-select" className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
                   Active Auth Key
                 </label>
                 <select
+                  id="auth-key-select"
                   value={consoleSelectedKey}
                   onChange={(e) => setConsoleSelectedKey(e.target.value)}
                   className="w-full bg-slate-955 border border-slate-800 focus:border-indigo-505 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 font-mono focus:outline-none cursor-pointer shadow-inner"
@@ -606,10 +607,11 @@ print("Response JSON:", response.json())`;
               </div>
 
               <div>
-                <label className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
+                <label htmlFor="portrait-select" className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
                   Query Portrait Photo
                 </label>
                 <select
+                  id="portrait-select"
                   value={consoleSelectedPortrait}
                   onChange={(e) => setConsoleSelectedPortrait(e.target.value)}
                   className="w-full bg-slate-955 border border-slate-800 focus:border-indigo-505 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-sans focus:outline-none cursor-pointer shadow-inner"
@@ -623,10 +625,11 @@ print("Response JSON:", response.json())`;
               </div>
 
               <div>
-                <label className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
+                <label htmlFor="error-select" className="block text-[9px] font-mono text-slate-450 uppercase tracking-widest mb-1">
                   Inject API Error
                 </label>
                 <select
+                  id="error-select"
                   value={injectedError}
                   onChange={(e) => setInjectedError(e.target.value as "none" | "401" | "429")}
                   className={`w-full bg-slate-955 border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer shadow-inner transition-all ${

@@ -1,0 +1,142 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feColorMatrix type="matrix" values="
+        0 0 0 0 0.13
+        0 0 0 0 0.77
+        0 0 0 0 0.36
+        0 0 0 1 0
+      " />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <linearGradient id="leftFaceGrad" x1="15" y1="25" x2="60" y2="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#0b172a" />
+      <stop offset="60%" stopColor="#0a2540" />
+      <stop offset="100%" stopColor="#0ea5e9" />
+    </linearGradient>
+    <linearGradient id="lineGreenGrad" x1="60" y1="18" x2="60" y2="102" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#4ade80" />
+      <stop offset="50%" stopColor="#22c55e" />
+      <stop offset="100%" stopColor="#15803d" />
+    </linearGradient>
+    <linearGradient id="hairCyanGrad" x1="50" y1="25" x2="90" y2="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#0284c7" />
+      <stop offset="100%" stopColor="#0369a1" />
+    </linearGradient>
+  </defs>
+  
+  <path 
+    d="M 60,25 C 45,25 35,32 30,42 C 28,40 25,40 22,42 C 18,45 18,52 20,58 C 18,62 18,66 21,70 C 23,72 26,71 28,73 C 33,83 45,95 60,100 Z" 
+    fill="url(#hairCyanGrad)" 
+    opacity="0.35"
+  />
+  <path 
+    d="M 28,32 C 22,42 18,55 22,70 L 26,82 L 31,88" 
+    stroke="#0284c7" 
+    strokeWidth="3.5" 
+    strokeLinecap="round" 
+    fill="none" 
+    opacity="0.8"
+  />
+  <path 
+    d="M 18,48 L 22,48 L 24,62 L 20,62 Z" 
+    fill="#0ea5e9" 
+    stroke="#38bdf8" 
+    strokeWidth="1"
+  />
+  <path 
+    d="M 60,25 L 49,29 L 45,39 L 52,39 L 60,35 Z" 
+    fill="#0ea5e9" 
+  />
+  <path 
+    d="M 45,39 L 52,39 L 48,50 L 38,50 Z" 
+    fill="#0369a1" 
+  />
+  <polygon 
+    points="48,46 51,46 49,50 46,50" 
+    fill="#a3e635" 
+    opacity="0.9" 
+  />
+  <path 
+    d="M 60,35 L 52,39 L 48,50 L 53,62 L 60,62 Z" 
+    fill="url(#leftFaceGrad)" 
+  />
+  <path 
+    d="M 53,62 L 40,64 L 41,68 L 53,68 Z" 
+    fill="#0c4a6e" 
+  />
+  <path 
+    d="M 48,50 L 38,50 L 42,75 L 53,62 Z" 
+    fill="#075985" 
+  />
+  <path 
+    d="M 60,62 L 53,68 L 52,78 L 46,84 L 49,89 L 60,86 Z" 
+    fill="#0077b6" 
+  />
+  <path 
+    d="M 60,86 L 49,89 L 52,98 L 60,95 Z" 
+    fill="#0096c7" 
+  />
+  <path 
+    d="M 60,95 L 48,107 L 52,112 L 60,110 Z" 
+    fill="#030712" 
+  />
+  <path 
+    d="M 60,110 L 52,112 L 54,120 L 60,120 Z" 
+    fill="#020617" 
+  />
+  <path 
+    d="M 60,25 A 38,38 0 0 1 60,101" 
+    fill="none" 
+    stroke="#0284c7" 
+    strokeWidth="2.5" 
+    strokeLinecap="round"
+    opacity="0.8"
+  />
+  <path 
+    d="M 60,18 A 45,45 0 0 1 60,108" 
+    fill="none" 
+    stroke="#38bdf8" 
+    strokeWidth="1.2" 
+    strokeDasharray="4 4"
+    opacity="0.6"
+  />
+  <line x1="60" y1="36" x2="94" y2="36" stroke="#0284c7" strokeWidth="1.5" opacity="0.7" />
+  <line x1="60" y1="52" x2="98" y2="52" stroke="#0ea5e9" strokeWidth="1.5" opacity="0.8" />
+  <line x1="60" y1="68" x2="98" y2="68" stroke="#38bdf8" strokeWidth="1.5" opacity="0.8" />
+  <line x1="60" y1="84" x2="92" y2="84" stroke="#0077b6" strokeWidth="1.5" opacity="0.7" />
+  <path d="M 72,36 L 82,48 L 94,48" stroke="#38bdf8" strokeWidth="1" fill="none" opacity="0.7" />
+  <path d="M 66,68 L 74,80 L 88,80" stroke="#00b4d8" strokeWidth="1" fill="none" opacity="0.6" />
+  <rect x="70" y="32" width="8" height="8" fill="#0284c7" rx="1" />
+  <rect x="85" y="48" width="8" height="8" fill="#00b4d8" rx="1" />
+  <rect x="72" y="64" width="10" height="8" fill="#a3e635" rx="1" opacity="0.9" />
+  <rect x="80" y="80" width="8" height="8" fill="#0369a1" rx="1" />
+  <circle cx="94" cy="36" r="2.5" fill="#38bdf8" />
+  <circle cx="98" cy="52" r="2.5" fill="#4ade80" />
+  <circle cx="98" cy="68" r="2.5" fill="#38bdf8" />
+  <circle cx="92" cy="84" r="2.5" fill="#0284c7" />
+  
+  <line 
+    x1="60" 
+    y1="13" 
+    x2="60" 
+    y2="111" 
+    stroke="url(#lineGreenGrad)" 
+    strokeWidth="3.2" 
+    filter="url(#neonGlow)" 
+    strokeLinecap="round" 
+  />
+  <line 
+    x1="60" 
+    y1="13" 
+    x2="60" 
+    y2="111" 
+    stroke="#f0fdf4" 
+    strokeWidth="1.2" 
+    strokeLinecap="round" 
+  />
+</svg>

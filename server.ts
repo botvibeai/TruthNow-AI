@@ -11,6 +11,28 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+app.set("trust proxy", true);
+
+// Enable CORS for agent discovery & APIs
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-simulate-error, x-markdown-tokens");
+  
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
+function getBaseUrl(req: express.Request): string {
+  const host = req.get("host") || "truthnowai.com";
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  const protocol = isLocal ? "http" : "https";
+  return `${protocol}://${host}`;
+}
+
 // Body parser for larger attachments (uploaded standard-resolution images)
 app.use(express.json({ limit: "15mb" }));
 
@@ -163,16 +185,73 @@ function authenticateApiRequest(req: express.Request, res: express.Response, nex
 
 // Homepage Link response headers (RFC 8288) & Accept: text/markdown negotiation
 app.use((req, res, next) => {
-  if (req.path === "/" || req.path === "/index.html") {
+  const isWebPage = 
+    req.method === "GET" && 
+    (req.path === "/" || req.path === "/index.html" || req.path === "/docs/api");
+
+  if (isWebPage) {
     res.setHeader(
       "Link",
-      '</.well-known/api-catalog>; rel="api-catalog", </docs/api>; rel="service-doc"'
+      '</.well-known/api-catalog>; rel="api-catalog", </docs/api>; rel="service-doc", </.well-known/mcp/server-card.json>; rel="mcp-server-card", </.well-known/oauth-authorization-server>; rel="oauth-authorization-server", </.well-known/oauth-protected-resource>; rel="oauth-protected-resource", </.well-known/agent-skills/index.json>; rel="agent-skills", </auth.md>; rel="agent-registration", </site.txt>; rel="help", </api.txt>; rel="service-desc", </routes.txt>; rel="index", </actions.txt>; rel="help"'
     );
 
     if (req.headers.accept && req.headers.accept.includes("text/markdown")) {
       res.setHeader("Content-Type", "text/markdown; charset=utf-8");
 
-      const markdownContent = `# TruthNowAI - Cognitive AI Visual Verification Platform
+      if (req.path === "/docs/api") {
+        const docMarkdown = `# TruthNowAI API Specification
+
+Welcome to the core developer and agent documentation portal. TruthNowAI exposes advanced machine-learning facial analysis pipelines under CCPA, COPPA, and GDPR compliance regimes.
+
+## Scan Portrait Metrics
+\`POST /api/scan\`
+
+Perform multi-spectral biometrics analysis to extract demographic aspects, verify age compliance classifications, and audit deepfake generative traits.
+
+### Request Schema (JSON)
+\`\`\`json
+{
+  "imageBase64": "data:image/jpeg;base64,...",
+  "mimeType": "image/jpeg",
+  "userCountrySim": "US"
+}
+\`\`\`
+
+### Response Schema (JSON)
+\`\`\`json
+{
+  "success": true,
+  "usingSimulation": false,
+  "facesDetected": 1,
+  "isAiGenerated": false,
+  "aiConfidence": 98.2,
+  "aiReason": "Structural photo evaluation confirms natural sensor noise signature.",
+  "faces": [
+    {
+      "estimatedAge": 24,
+      "ageRange": "22-27",
+      "ageCategory": "Young Adult",
+      "genderPresentation": "Male",
+      "genderConfidence": 91.2,
+      "minorAppearanceSafetyCode": "PASS_ADULT_APPEARANCE",
+      "minorSafetyReasoning": "Confirmed adult appearance (18+)."
+    }
+  ]
+}
+\`\`\`
+
+## Automated Agent Discovery
+If you're an automated AI agent or search crawler, feel free to leverage our RFC-compliant discovery endpoints:
+- **API Catalog Linkset**: \`/.well-known/api-catalog\`
+- **MCP Server Card Schema**: \`/.well-known/mcp/server-card.json\`
+- **Agent Skills Discovery**: \`/.well-known/agent-skills/index.json\`
+- **OAuth Server Information**: \`/.well-known/oauth-authorization-server\`
+`;
+        const tokenCount = Math.ceil(docMarkdown.length / 4);
+        res.setHeader("x-markdown-tokens", tokenCount.toString());
+        return res.send(docMarkdown);
+      } else {
+        const markdownContent = `# TruthNowAI - Cognitive AI Visual Verification Platform
 
 TruthNowAI is a state-of-the-art cognitive visual compliance and multi-spectral biometric scanning engine. It allows developers, compliance officers, and platform systems to verify age categories, gender presentation traits, and deepfake verification risk metrics in real-time.
 
@@ -203,9 +282,10 @@ Content-Type: application/json
 }
 \`\`\`
 `;
-      const tokenCount = Math.ceil(markdownContent.length / 4);
-      res.setHeader("x-markdown-tokens", tokenCount.toString());
-      return res.send(markdownContent);
+        const tokenCount = Math.ceil(markdownContent.length / 4);
+        res.setHeader("x-markdown-tokens", tokenCount.toString());
+        return res.send(markdownContent);
+      }
     }
   }
   next();
@@ -218,9 +298,9 @@ app.get("/api/health", (req, res) => {
 
 // GET /.well-known/api-catalog
 app.get("/.well-known/api-catalog", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   res.setHeader("Content-Type", "application/linkset+json; charset=utf-8");
-  res.json({
+  res.send(JSON.stringify({
     linkset: [
       {
         anchor: `${baseUrl}/api/scan`,
@@ -244,12 +324,12 @@ app.get("/.well-known/api-catalog", (req, res) => {
         ]
       }
     ]
-  });
+  }));
 });
 
 // GET /.well-known/openid-configuration
 app.get("/.well-known/openid-configuration", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   res.json({
     issuer: baseUrl,
     authorization_endpoint: `${baseUrl}/oauth/authorize`,
@@ -265,7 +345,7 @@ app.get("/.well-known/openid-configuration", (req, res) => {
 
 // GET /.well-known/oauth-authorization-server
 app.get("/.well-known/oauth-authorization-server", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   res.json({
     issuer: baseUrl,
     authorization_endpoint: `${baseUrl}/oauth/authorize`,
@@ -289,7 +369,7 @@ app.get("/.well-known/oauth-authorization-server", (req, res) => {
 
 // GET /.well-known/oauth-protected-resource
 app.get("/.well-known/oauth-protected-resource", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   res.json({
     resource: `${baseUrl}/api/scan`,
     authorization_servers: [
@@ -302,7 +382,7 @@ app.get("/.well-known/oauth-protected-resource", (req, res) => {
 
 // GET /.well-known/mcp/server-card.json
 app.get("/.well-known/mcp/server-card.json", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   res.json({
     serverInfo: {
       name: "TruthNowAI Biometric Scanner Server",
@@ -335,7 +415,7 @@ app.get("/.well-known/mcp/server-card.json", (req, res) => {
 
 // GET /.well-known/agent-skills/index.json
 app.get("/.well-known/agent-skills/index.json", (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = getBaseUrl(req);
   const skillFilePath = path.join(process.cwd(), "public", "skills", "demographic-scanning", "SKILL.md");
   let digest = "sha256:d8b2d18da0231998bd34a5a2e573496359142e88a0e0e181427bcbd5c9579a02";
   
@@ -573,25 +653,43 @@ function getGeminiClient(): GoogleGenAI | null {
 }
 
 // ----------------------------------------------------
-// SEO & Dynamic .txt Crawler files
+// SEO, Favicons, & Dynamic .txt Crawler files
 // ----------------------------------------------------
+
+// Serve favicons reliably
+app.get(["/favicon.ico", "/favicon.svg", "/favicon.png"], (req, res) => {
+  const filePath = path.join(process.cwd(), "public", "favicon.svg");
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.sendFile(filePath);
+});
 
 // /robots.txt
 app.get("/robots.txt", (req, res) => {
   res.type("text/plain");
   res.send(
-    `# Sitemaps and crawler instructions for TruthNowAI.com\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://truthnowai.com/sitemap.xml`
+    `# Sitemaps and crawler instructions for TruthNowAI.com
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Content signals declaring training preferences
+Content-Signal: ai-train=no, search=yes, ai-input=no
+
+Sitemap: https://truthnowai.com/sitemap.xml`
   );
 });
 
 // /sitemap.xml
 app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml");
-  const siteUrl = "https://truthnowai.com";
+  const siteUrl = getBaseUrl(req);
   const dateStr = new Date().toISOString().split("T")[0];
   
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- TruthNowAI.com Core Sitemaps -->
+  
+  <!-- Human Accessible Pages -->
   <url>
     <loc>${siteUrl}/</loc>
     <lastmod>${dateStr}</lastmod>
@@ -599,12 +697,126 @@ app.get("/sitemap.xml", (req, res) => {
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>${siteUrl}/developer</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>${siteUrl}/docs/api</loc>
     <lastmod>${dateStr}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Agent & Machine Discovery Resources -->
+  <url>
+    <loc>${siteUrl}/auth.md</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/.well-known/api-catalog</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/.well-known/mcp/server-card.json</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/.well-known/agent-skills/index.json</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Agent Raw Discovery Text Archives -->
+  <url>
+    <loc>${siteUrl}/site.txt</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/api.txt</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/routes.txt</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${siteUrl}/actions.txt</loc>
+    <lastmod>${dateStr}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>`);
+});
+
+// GET /site.txt
+app.get("/site.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "public", "site.txt");
+    if (fs.existsSync(filePath)) {
+      return res.send(fs.readFileSync(filePath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("Error reading site.txt:", err);
+  }
+  res.send("TruthNowAI: Cognitive compliance, biometric aspect verification and face-comparison engine.");
+});
+
+// GET /api.txt
+app.get("/api.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "public", "api.txt");
+    if (fs.existsSync(filePath)) {
+      return res.send(fs.readFileSync(filePath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("Error reading api.txt:", err);
+  }
+  res.send("TruthNowAI API Documentation.");
+});
+
+// GET /routes.txt
+app.get("/routes.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "public", "routes.txt");
+    if (fs.existsSync(filePath)) {
+      return res.send(fs.readFileSync(filePath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("Error reading routes.txt:", err);
+  }
+  res.send("TruthNowAI Core Routes map.");
+});
+
+// GET /actions.txt
+app.get("/actions.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  try {
+    const filePath = path.join(process.cwd(), "public", "actions.txt");
+    if (fs.existsSync(filePath)) {
+      return res.send(fs.readFileSync(filePath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("Error reading actions.txt:", err);
+  }
+  res.send("TruthNowAI Action Capabilities ledger.");
 });
 
 // ----------------------------------------------------

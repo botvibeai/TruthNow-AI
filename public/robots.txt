@@ -3,4 +3,7 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
+# Content signals declaring training preferences
+Content-Signal: ai-train=no, search=yes, ai-input=no
+
 Sitemap: https://truthnowai.com/sitemap.xml
