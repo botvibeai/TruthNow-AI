@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Shield, Sparkles, Zap, Globe, FileCheck } from "lucide-react";
+import { Shield, Sparkles, Zap, Globe, FileCheck, AlertTriangle } from "lucide-react";
 import { translations, Language } from "../translations";
 
 interface HeroSectionProps {
@@ -45,6 +45,44 @@ export default function HeroSection({ onScrollToScanner, lang }: HeroSectionProp
               </span>
             </motion.h1>
 
+            {/* Real vs AI / Deepfake Technical Warning Statement */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="border border-slate-800 bg-slate-900/60 rounded-xl p-4.5 space-y-3.5 shadow-lg relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 blur-xl rounded-full" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/5 blur-xl rounded-full" />
+              
+              <div className="flex items-center gap-2 text-indigo-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Detection Protocol: Deepfake vs. Authentic Media</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
+                <div className="space-y-1.5 bg-emerald-950/10 border border-emerald-900/20 rounded-lg p-3">
+                  <span className="text-emerald-400 font-bold font-mono tracking-tight flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                    AUTHENTIC ORIGINAL (REAL)
+                  </span>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    Physical sensor captures mapped directly to hardware frames. Verification filters confirm natural CMOS raw noise frequencies, optical lens aberration patterns, realistic environmental lighting gradients, and authentic anatomical skin/shadow transitions.
+                  </p>
+                </div>
+                
+                <div className="space-y-1.5 bg-rose-950/15 border border-rose-900/25 rounded-lg p-3">
+                  <span className="text-rose-400 font-bold font-mono tracking-tight flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse" />
+                    SYNTHESIZED DEEPFAKE (AI)
+                  </span>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    Neural generative models rendering synthetic facial regions. Detections catch abnormal microscopic frequency clusters, unnatural ear/hair border blending artifacts, fake-skin texture flattening, and geometric alignment anomalies.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
             <motion.p
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -59,12 +97,13 @@ export default function HeroSection({ onScrollToScanner, lang }: HeroSectionProp
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-wrap gap-2 text-[11px] font-mono text-slate-500"
+              className="flex flex-wrap gap-2 text-[11px] font-mono"
             >
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#age gender detector</span>
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#real or ai image verification</span>
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#fake or not checker</span>
-              <span className="border border-slate-900 bg-slate-900/30 px-2 py-0.5 rounded-md hover:border-slate-800 transition-colors">#face gender analyzer</span>
+              <span className="border border-emerald-950/40 bg-emerald-950/10 text-emerald-400 hover:border-emerald-800 transition-colors px-2.5 py-0.5 rounded-md">#deepfake verification</span>
+              <span className="border border-cyan-950/40 bg-cyan-950/10 text-cyan-400 hover:border-cyan-800 transition-colors px-2.5 py-0.5 rounded-md">#biometric face compare</span>
+              <span className="border border-slate-900 bg-slate-900/30 text-slate-400 hover:border-slate-800 transition-colors px-2.5 py-0.5 rounded-md">#real or ai checker</span>
+              <span className="border border-slate-900 bg-slate-900/30 text-slate-400 hover:border-slate-800 transition-colors px-2.5 py-0.5 rounded-md">#photo gender detector</span>
+              <span className="border border-slate-900 bg-slate-900/30 text-slate-400 hover:border-slate-800 transition-colors px-2.5 py-0.5 rounded-md">#minor or adult appearance check</span>
             </motion.div>
 
             {/* CTA Controls */}

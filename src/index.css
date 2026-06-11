@@ -16,3 +16,13 @@
   --font-size-5xl: 3.8rem;
   --font-size-6xl: 4.6rem;
 }
+
+@keyframes scanLaser {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(234px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-scanLaser {
+  animation: scanLaser 2.2s infinite ease-in-out;
+}

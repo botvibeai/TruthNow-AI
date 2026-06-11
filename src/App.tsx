@@ -926,7 +926,7 @@ export default function App() {
                 }`}
               >
                 <Scale className="w-3.5 h-3.5" />
-                <span>Side-by-Side</span>
+                <span>Face Compare</span>
               </button>
               <button 
                 onClick={() => setWorkbenchMode("bulk")}
@@ -1892,114 +1892,6 @@ export default function App() {
           </AnimatePresence>
         </section>
 
-        {/* SECTION FOR SEARCH ENGINE CRAWLERS AND SEO AUDITS */}
-        <section id="crawler-audit-section" className="scroll-mt-24 space-y-10">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <span className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-widest bg-emerald-950/20 px-3 py-1 rounded-full border border-emerald-900/30">
-              Crawler & Metadata Validation Node
-            </span>
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">
-              SEO Site Crawl Diagnostics
-            </h2>
-            <p className="text-sm text-slate-400">
-              TruthNowAI.com is calibrated for instant algorithmic search indexation. Inspect our live index maps, active directives, and structural routing schemas instantly below.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-            
-            {/* COLUMN LEFT: Explain directives */}
-            <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
-              <div className="space-y-4">
-                <span className="text-[10px] font-mono text-slate-500 font-bold uppercase tracking-widest block">Directives & Scraper Signals</span>
-                <h4 className="text-lg font-bold text-slate-200">Live Indexing Configs</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  We maintain automated crawler support directly at the server root. Googlebot and Bingbot parse our <strong className="text-slate-300 font-mono">robots.txt</strong> directives to isolate protected visual API logic from exposure while caching valuable keyword endpoints automatically.
-                </p>
-
-                <div className="space-y-2 border-t border-slate-800 pt-4 text-xs">
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-slate-500 font-mono">Sitemap Inclusion:</span>
-                    <span className="text-emerald-400 font-bold font-mono">VALIDATION ACTIVE</span>
-                  </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-slate-500 font-mono">Disallowed API block:</span>
-                    <span className="text-emerald-400 font-bold font-mono">ENABLED (/api/*)</span>
-                  </div>
-                  <div className="flex items-center justify-between py-1 border-b border-slate-800 pb-2">
-                    <span className="text-slate-500 font-mono">Canonical Target Domain:</span>
-                    <span className="text-slate-300 font-medium font-mono">truthnowai.com</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action tabs selectors */}
-              <div className="flex gap-3 pt-6">
-                <button
-                  onClick={() => setActiveCrawlerPreview(activeCrawlerPreview === "robots" ? null : "robots")}
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold font-mono transition-all border cursor-pointer uppercase ${
-                    activeCrawlerPreview === "robots" 
-                      ? "bg-indigo-600 border-indigo-500 text-white" 
-                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {activeCrawlerPreview === "robots" ? "Hide Robots.txt" : "Inspect Robots.txt"}
-                </button>
-                <button
-                  onClick={() => setActiveCrawlerPreview(activeCrawlerPreview === "sitemap" ? null : "sitemap")}
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold font-mono transition-all border cursor-pointer uppercase ${
-                    activeCrawlerPreview === "sitemap" 
-                      ? "bg-indigo-600 border-indigo-500 text-white" 
-                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {activeCrawlerPreview === "sitemap" ? "Hide Sitemap.xml" : "Inspect Sitemap.xml"}
-                </button>
-              </div>
-
-            </div>
-
-            {/* COLUMN RIGHT: Live File outputs */}
-            <div className="lg:col-span-7 flex flex-col">
-              <div className="flex-grow bg-slate-950 border border-slate-800/80 rounded-2xl p-5 flex flex-col justify-between font-mono text-[11px] leading-relaxed shadow-inner relative min-h-[250px]">
-                
-                {/* Visual file tag */}
-                <div className="absolute top-2.5 right-3 bg-indigo-505 text-indigo-400 font-bold text-[9px] px-2 py-0.5 border border-indigo-900/30 rounded">
-                  {activeCrawlerPreview === "robots" ? "ROBOTS.TXT DIRECTIVES" : activeCrawlerPreview === "sitemap" ? "SITEMAP.XML MAPS" : "AWAITING SELECTION"}
-                </div>
-
-                {activeCrawlerPreview === null ? (
-                  <div className="flex-grow flex flex-col items-center justify-center p-8 text-center text-slate-500">
-                    <Eye className="w-8 h-8 text-slate-700 mb-2 animate-bounce" />
-                    <span>Click either file inspect button on the left to review crawler payloads.</span>
-                  </div>
-                ) : activeCrawlerPreview === "robots" ? (
-                  <div className="space-y-3">
-                    <span className="text-slate-500 uppercase font-bold text-[9px] tracking-wider">File Content: robots.txt</span>
-                    <pre className="text-slate-300 p-3 bg-slate-900 rounded-lg overflow-x-auto select-all whitespace-pre">
-                      {robotsTxtContent}
-                    </pre>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <span className="text-slate-500 uppercase font-bold text-[9px] tracking-wider block mb-1">File Content: sitemap.xml</span>
-                    <pre className="text-slate-300 p-3 bg-slate-900 rounded-lg overflow-x-auto select-all whitespace-pre">
-                      {sitemapXmlContent}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-3 border-t border-slate-900/60 flex items-center justify-between text-[9px] text-slate-600">
-                  <span>Routing Source: server.ts mappings</span>
-                  <span>Standard Crawl Check Completed</span>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        </section>
-
         {/* SECTION: Social Proof / User Reviews Carousel with Star metrics */}
         <section id="reviews-section" className="scroll-mt-24 space-y-12 text-left">
           <div className="text-center max-w-3xl mx-auto space-y-4">
@@ -2052,10 +1944,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Highlight verified search term targeted trigger */}
-                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/25 px-2 py-0.5 border border-emerald-900/30 rounded">
-                      Query: "{review.verifiedQuery}"
-                    </span>
                   </div>
                 </div>
               ))}
@@ -2120,7 +2008,7 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-2">
                       <label className="text-slate-400 font-semibold block">Rating Performance</label>
                       <select 
                         value={reviewRating}
@@ -2130,20 +2018,6 @@ export default function App() {
                         <option value="5">5 Stars (Excellent)</option>
                         <option value="4">4 Stars (Great)</option>
                         <option value="3">3 Stars (Adequate)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-slate-400 font-semibold block block truncate max-w-full">Core Verified Query</label>
-                      <select 
-                        value={reviewQuery}
-                        onChange={(e) => setReviewQuery(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 focus:outline-none focus:border-indigo-500 truncate"
-                      >
-                        <option value="how to check if person in photo is minor or adult appearance">Minor/Adult Check</option>
-                        <option value="age and gender detection">Age & Gender Detection</option>
-                        <option value="face gender analyzer">Face Analyzer</option>
-                        <option value="gender detector photo">Photo Detector</option>
                       </select>
                     </div>
                   </div>

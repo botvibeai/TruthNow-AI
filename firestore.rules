@@ -9,7 +9,7 @@ service cloud.firestore {
 
     // Primitive Global Helpers
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.email_verified == true;
     }
 
     function isOwner(userId) {
@@ -22,60 +22,76 @@ service cloud.firestore {
 
     // Entity validator: User
     function isValidUser(user) {
-      return user.userId == request.auth.uid
+      return user.keys().hasAll(['userId', 'email', 'createdAt', 'updatedAt', 'totalScansCount'])
+        && user.keys().size() <= 7
+        && user.userId == request.auth.uid
         && user.email is string && user.email.size() <= 200
         && user.totalScansCount is int && user.totalScansCount >= 0
-        && user.createdAt is string
-        && user.updatedAt is string;
+        && user.createdAt is string && user.createdAt.size() <= 50
+        && user.updatedAt is string && user.updatedAt.size() <= 50
+        && (!('displayName' in user) || (user.displayName is string && user.displayName.size() <= 120))
+        && (!('photoURL' in user) || (user.photoURL is string && user.photoURL.size() <= 500));
     }
 
     // Entity validator: ApiKey
     function isValidApiKey(apiKey) {
-      return apiKey.id is string && apiKey.id.size() <= 128
+      return apiKey.keys().hasAll(['id', 'name', 'key', 'createdAt', 'status', 'callsCount'])
+        && apiKey.keys().size() == 6
+        && apiKey.id is string && apiKey.id.size() <= 128
         && apiKey.name is string && apiKey.name.size() <= 120
         && apiKey.key is string && apiKey.key.size() <= 200
-        && apiKey.createdAt is string
+        && apiKey.createdAt is string && apiKey.createdAt.size() <= 50
         && (apiKey.status == 'active' || apiKey.status == 'revoked')
         && apiKey.callsCount is int && apiKey.callsCount >= 0;
     }
 
     // Entity validator: Review
     function isValidReview(review) {
-      return review.id is string && review.id.size() <= 128
+      return review.keys().hasAll(['id', 'author', 'role', 'company', 'rating', 'avatarSeed', 'text', 'verifiedQuery', 'createdAt', 'userId'])
+        && review.keys().size() == 10
+        && review.id is string && review.id.size() <= 128
         && review.author is string && review.author.size() <= 120
         && review.role is string && review.role.size() <= 150
         && review.company is string && review.company.size() <= 150
         && review.rating is int && review.rating >= 1 && review.rating <= 5
+        && review.avatarSeed is string && review.avatarSeed.size() <= 150
         && review.text is string && review.text.size() <= 2000
         && review.verifiedQuery is string && review.verifiedQuery.size() <= 250
-        && review.createdAt is string;
+        && review.createdAt is string && review.createdAt.size() <= 50
+        && review.userId == request.auth.uid;
     }
 
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.totalScansCount == 0;
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalScansCount', 'updatedAt']) || 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])
-      );
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) 
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalScansCount', 'updatedAt']) || 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])
+        );
       allow delete: if isOwner(userId);
 
       match /apiKeys/{keyId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && isValidId(keyId) && isValidApiKey(request.resource.data) && request.resource.data.callsCount == 0;
-        allow update: if isOwner(userId) && isValidId(keyId) && isValidApiKey(request.resource.data) && (
-          // Action: Toggle status (active/revoked) or record simulated call count
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['callsCount'])
-        );
+        allow update: if isOwner(userId) && isValidId(keyId) && isValidApiKey(request.resource.data) 
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.key == resource.data.key
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (
+            // Action: Toggle status (active/revoked) or record simulated call count
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['callsCount'])
+          );
         allow delete: if isOwner(userId) && isValidId(keyId);
       }
     }
 
     match /reviews/{reviewId} {
       allow read, list: if true; // Public list
-      allow create: if isSignedIn() && isValidId(reviewId) && isValidReview(request.resource.data) 
-        && (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(reviewId) && isValidReview(request.resource.data);
       allow update, delete: if false; // Reviews are immutable!
     }
   }

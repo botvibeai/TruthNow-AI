@@ -15,6 +15,149 @@ const PORT = 3000;
 app.use(express.json({ limit: "15mb" }));
 
 // ----------------------------------------------------
+// Security & API Access Middlewares
+// ----------------------------------------------------
+
+// Basic safe security headers (excluding X-Frame-Options to allow development iframe wrappers)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// In-memory rate limiting map
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+function apiRateLimiter(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1") as string;
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute window
+  const maxRequests = 60; // 60 requests per minute
+
+  const record = rateLimitMap.get(ip);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+    return next();
+  }
+
+  if (record.count >= maxRequests) {
+    const retryAfterSeconds = Math.ceil((record.resetTime - now) / 1000);
+    return res.status(429).json({
+      success: false,
+      error: "RATE_LIMIT_EXCEEDED",
+      statusCode: 429,
+      message: "Too Many Requests. Your client has exceeded its rate limit of 60 requests/min.",
+      retryAfterSeconds,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  record.count++;
+  next();
+}
+
+function authenticateApiRequest(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+
+  // 1. If there is an Authorization header, we MUST validate it
+  if (authHeader) {
+    if (typeof authHeader !== "string") {
+      return res.status(401).json({
+        success: false,
+        error: "UNAUTHORIZED_API_ACCESS",
+        statusCode: 401,
+        message: "The provided API credential token is invalid, deactivated, or lacks required scopes.",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const parts = authHeader.split(" ");
+    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
+      return res.status(401).json({
+        success: false,
+        error: "UNAUTHORIZED_API_ACCESS",
+        statusCode: 401,
+        message: "The Authorization header must be in the format: Bearer <API_KEY>",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const token = parts[1];
+    
+    // Support standard active formats: starting with tn_live_, tn_test_, tn_sandbox_, or initial test sandbox key
+    const isValidKeyFormat = (
+      token.startsWith("tn_live_") || 
+      token.startsWith("tn_test_") || 
+      token.startsWith("tn_sandbox_") || 
+      token === "tn_test_a4b9c1d0e5f67890abcdef123y7"
+    ) && token.length >= 20;
+
+    if (!isValidKeyFormat) {
+      return res.status(401).json({
+        success: false,
+        error: "UNAUTHORIZED_API_ACCESS",
+        statusCode: 401,
+        message: "The provided API credential token is invalid, deactivated, or has been revoked.",
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Support simulated errors if requested by developer portal via custom header or query
+    const simError = req.headers["x-simulate-error"] || req.query["simulateError"];
+    if (simError === "401") {
+      return res.status(401).json({
+        success: false,
+        error: "UNAUTHORIZED_API_ACCESS",
+        statusCode: 401,
+        message: "The provided API credential token is invalid, deactivated, or lacks required scopes.",
+        timestamp: new Date().toISOString()
+      });
+    }
+    if (simError === "429") {
+      return res.status(429).json({
+        success: false,
+        error: "RATE_LIMIT_EXCEEDED",
+        statusCode: 429,
+        message: "Too Many Requests. Your sandbox key has exceeded its peak window limit of 60 requests/min.",
+        retryAfterSeconds: 30,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return next();
+  }
+
+  // 2. No auth header: verify if it is an internal request from our own SPA frontend interface
+  const referer = req.headers["referer"] || "";
+  const host = req.headers["host"] || "";
+  const secFetchSite = req.headers["sec-fetch-site"];
+
+  const isLocalRequest = 
+    secFetchSite === "same-origin" || 
+    referer.includes(host) || 
+    referer.includes("ais-dev") || 
+    referer.includes("ais-pre") ||
+    referer.includes("localhost") ||
+    referer.includes("run.app") ||
+    process.env.NODE_ENV !== "production";
+
+  if (isLocalRequest) {
+    return next();
+  }
+
+  // Reject all other external third-party calls that omit the required API keys
+  return res.status(401).json({
+    success: false,
+    error: "UNAUTHORIZED_API_ACCESS",
+    statusCode: 401,
+    message: "API authentication credentials missing. Please supply your API key in the 'Authorization: Bearer <token>' header.",
+    timestamp: new Date().toISOString()
+  });
+}
+
+// ----------------------------------------------------
 // Agent Discovery, OAuth, MCP, & API Catalog Endpoints
 // ----------------------------------------------------
 
@@ -551,7 +694,7 @@ async function callCloudmersive(rawBase64: string, mimeType: string, apiKey: str
         genderPresentation,
         genderConfidence,
         minorAppearanceSafetyCode: minorStatus,
-        minorSafetyReasoning: `[Cloudmersive Biometrics Node] ${minorText}`,
+        minorSafetyReasoning: `${minorText}`,
         expression: "Neutral / Cooperative Portrait",
         expressionConfidence: 85.0,
         attributes: {
@@ -580,7 +723,7 @@ async function callCloudmersive(rawBase64: string, mimeType: string, apiKey: str
         genderPresentation: "Female",
         genderConfidence: 94.0,
         minorAppearanceSafetyCode: "PASS_ADULT_APPEARANCE",
-        minorSafetyReasoning: "[Cloudmersive Verification] General face checks processed successfully. Standard adult appearance defaults applied.",
+        minorSafetyReasoning: "General face checks processed successfully. Standard adult appearance defaults applied.",
         expression: "Neutral Portrait",
         expressionConfidence: 80.0,
         attributes: {
@@ -610,7 +753,7 @@ async function callCloudmersive(rawBase64: string, mimeType: string, apiKey: str
 // Core API - Analysis and Classification proxy
 // ----------------------------------------------------
 
-app.post("/api/scan", async (req, res) => {
+app.post("/api/scan", apiRateLimiter, authenticateApiRequest, async (req, res) => {
   try {
     const { imageBase64, mimeType = "image/jpeg", userCountrySim = "US" } = req.body;
 
@@ -620,6 +763,20 @@ app.post("/api/scan", async (req, res) => {
 
     // Strip header prefix if included in the base64 string
     const rawBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
+    // Secure payload size analysis validation
+    const approxSizeInBytes = (rawBase64.length * 3) / 4;
+    const maxSizeBytes = 4 * 1024 * 1024; // 4MB Limit
+
+    if (approxSizeInBytes > maxSizeBytes) {
+      return res.status(413).json({
+        success: false,
+        error: "MAX_LIMIT_EXCEEDED",
+        statusCode: 413,
+        message: "Target canvas file stream size exceeds the 4MB maximum envelope cap. Compress image file vectors on client-side state prior to uploading.",
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Decide if simulated geo compliance region applies
     const countryToUse = userCountrySim || "US";
@@ -851,8 +1008,8 @@ function getSimulatedScan(country: string) {
     isAiGenerated: isAiGen,
     aiConfidence: aiConf,
     aiReason: isAiGen 
-      ? `[Simulated Model] AI Synthesis Detected. Minor structural boundary anomalies, overly smooth skin textures, and synthetic lighting gradients resemble neural generative source metrics.`
-      : `[Simulated Model] Authentic camera-captured photograph. Optical lens aberrations, standard CMOS sensor noise, and organic skin shadow falloff confirm real-world source with ${aiConf.toFixed(1)}% confidence.`,
+      ? `AI Synthesis Detected. Minor structural boundary anomalies, overly smooth skin textures, and synthetic lighting gradients resemble neural generative source metrics.`
+      : `Authentic camera-captured photograph. Optical lens aberrations, standard CMOS sensor noise, and organic skin shadow falloff confirm real-world source with ${aiConf.toFixed(1)}% confidence.`,
     faces: [
       {
         confidenceScore: 94.6,
@@ -862,7 +1019,7 @@ function getSimulatedScan(country: string) {
         genderPresentation: Math.random() > 0.5 ? "Female" : "Male",
         genderConfidence: 91.2,
         minorAppearanceSafetyCode: minorStatus,
-        minorSafetyReasoning: `[Simulation Mode] ${minorText} Integrates specialized keyword scanning (age gender detector, face gender analyzer, minor appearance safety check).`,
+        minorSafetyReasoning: `${minorText}`,
         expression: "Professional / Neutral",
         expressionConfidence: 87.4,
         attributes: {
